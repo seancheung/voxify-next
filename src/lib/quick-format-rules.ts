@@ -1,0 +1,52 @@
+import { z } from "zod";
+
+export const punctuationGroups = [
+  { chars: "。", label: "句号" },
+  { chars: "？?", label: "问号" },
+  { chars: "！!", label: "叹号" },
+  { chars: "；;", label: "分号" },
+  { chars: "：:", label: "冒号" },
+  { chars: "…", label: "省略号" },
+] as const;
+
+const schema = z.object({
+  punctuation: z.array(z.enum(["。", "？?", "！!", "；;", "：:", "…"])),
+  mergeShort: z.boolean(),
+  keepQuotes: z.boolean().default(false),
+  keepBrackets: z.boolean().default(false),
+  acrossLines: z.boolean(),
+  shortLimit: z.number().int().nonnegative(),
+  previousLimit: z.number().int().nonnegative(),
+});
+export type QuickFormatRules = z.infer<typeof schema>;
+export const defaultRules: QuickFormatRules = {
+  punctuation: punctuationGroups.map((group) => group.chars),
+  mergeShort: true,
+  keepQuotes: false,
+  keepBrackets: false,
+  acrossLines: true,
+  shortLimit: 10,
+  previousLimit: 50,
+};
+
+const storageKey = "voxify:quick-format-rules";
+let sessionRules = defaultRules;
+export function readFormatRules(): QuickFormatRules {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return sessionRules;
+    const parsed = schema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : defaultRules;
+  } catch {
+    return sessionRules;
+  }
+}
+
+export function rememberFormatRules(rules: QuickFormatRules) {
+  sessionRules = rules;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(rules));
+  } catch {
+    // Keep confirmed preferences available for this session.
+  }
+}

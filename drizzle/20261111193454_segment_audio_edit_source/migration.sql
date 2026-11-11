@@ -1,0 +1,1 @@
+ALTER TABLE `tts_generations` ADD `edited_from_generation_id` integer REFERENCES tts_generations(id) ON DELETE SET NULL;
