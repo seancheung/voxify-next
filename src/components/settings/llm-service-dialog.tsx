@@ -8,6 +8,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   createLLMService,
   createLLMServiceSchema,
@@ -73,7 +74,7 @@ export default function LLMServiceDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEdit ? "更新失败" : "添加失败",
+        title: isEdit ? t("Update failed") : t("Failed to add"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -91,12 +92,12 @@ export default function LLMServiceDialog({
       }),
     onSuccess: (res) =>
       toast.success({
-        title: "连接成功",
-        description: `延迟 ${res.latencyMs} ms · 共 ${res.count} 个模型`,
+        title: t("Connection successful"),
+        description: t("Latency {0} ms · {1} models", res.latencyMs, res.count),
       }),
     onError: (err) =>
       toast.error({
-        title: "连接失败",
+        title: t("Connection failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -135,7 +136,7 @@ export default function LLMServiceDialog({
       onOpenChange={(next) => {
         if (!busy) handleOpenChange(next);
       }}
-      title={isEdit ? "编辑 LLM 服务" : "添加 LLM 服务"}
+      title={isEdit ? t("Edit LLM service") : t("Add LLM service")}
       size="md"
       footer={
         <>
@@ -152,15 +153,15 @@ export default function LLMServiceDialog({
                 }}
               >
                 <PlugIcon />
-                {testing ? "测试中…" : "测试连接"}
+                {testing ? t("Testing…") : t("Test connection")}
               </Button>
             )}
           </form.Subscribe>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={busy}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={busy} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : isEdit ? "保存" : "添加"}
+            {submitting ? t("Saving…") : isEdit ? t("Save") : t("Add")}
           </Button>
         </>
       }
@@ -169,14 +170,14 @@ export default function LLMServiceDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
-                <field.InputField placeholder="例如：OpenAI 主力" autoFocus />
+              <field.FormField label={t("Name")}>
+                <field.InputField placeholder={t("Example: Main OpenAI service")} autoFocus />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="type">
             {(field) => (
-              <field.FormField label="类型">
+              <field.FormField label={t("Type")}>
                 <field.SelectField<LLMType>
                   options={TYPE_OPTIONS}
                   disabled={isEdit}
@@ -197,7 +198,7 @@ export default function LLMServiceDialog({
             {(type) => (
               <form.AppField name="baseUrl">
                 {(field) => (
-                  <field.FormField label="Base URL">
+                  <field.FormField label={t("Base URL")}>
                     <field.InputField placeholder={DEFAULT_LLM_BASE_URLS[type]} />
                   </field.FormField>
                 )}
@@ -207,29 +208,33 @@ export default function LLMServiceDialog({
           <form.AppField name="apiKey">
             {(field) => (
               <field.FormField
-                label="API Key"
+                label={t("API key")}
                 description={
                   isEdit
-                    ? "留空则保留原 API Key，输入则覆盖更新"
-                    : "可选；本地部署的 Ollama 通常无需填写"
+                    ? t("Leave blank to keep the current API key, or enter a replacement")
+                    : t("Optional for local Ollama deployments")
                 }
               >
-                <field.PasswordField placeholder={isEdit ? "留空保持不变" : "可选"} />
+                <field.PasswordField
+                  placeholder={isEdit ? t("Leave blank to keep current value") : t("Optional")}
+                />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="settings.maxOutputTokens">
             {(field) => (
               <field.FormField
-                label="输出 Token 上限"
-                description="可选。智能格式化等任务会按文本长度自动估算所需 token 数；如果该服务的模型有较小的输出上限（例如 DeepSeek 8K、Anthropic 默认 8K、Gemini 65K），在这里填上限值，自动估算时会以此封顶以避免超限报错。留空表示不封顶。"
+                label={t("Output token limit")}
+                description={t(
+                  "Optional. Smart formatting estimates tokens from the text length. Set the model’s output limit (e.g. 8K for DeepSeek or Anthropic, 65K for Gemini) to cap the estimate and prevent errors.",
+                )}
               >
                 <field.NumberField
                   min={1}
                   step={1024}
                   integer
                   clearable
-                  placeholder="留空表示不封顶"
+                  placeholder={t("Leave blank for no cap")}
                 />
               </field.FormField>
             )}

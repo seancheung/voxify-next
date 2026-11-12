@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   createTTSService,
   createTTSServiceSchema,
@@ -26,7 +27,12 @@ type TTSFormValues = z.input<typeof formSchema>;
 
 const TYPE_OPTIONS: SelectOption<TTSServiceType>[] = [
   { value: TTSServiceType.OpenTTS, label: "Open TTS" },
-  { value: TTSServiceType.OpenAITTS, label: "OpenAI TTS 兼容" },
+  {
+    value: TTSServiceType.OpenAITTS,
+    get label() {
+      return t("OpenAI TTS compatible");
+    },
+  },
 ];
 
 // OpenAI-compatible TTS endpoints accept these as `response_format`.
@@ -103,7 +109,7 @@ export default function TTSServiceDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEdit ? "更新失败" : "添加失败",
+        title: isEdit ? t("Update failed") : t("Failed to add"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -139,13 +145,13 @@ export default function TTSServiceDialog({
   const submitting = submitMutation.isPending;
   const submitLabel = submitting
     ? isEdit
-      ? "保存中…"
+      ? t("Saving…")
       : form.getFieldValue("type") === TTSServiceType.OpenTTS
-        ? "连接中…"
-        : "添加中…"
+        ? t("Connecting…")
+        : t("Adding…")
     : isEdit
-      ? "保存"
-      : "添加";
+      ? t("Save")
+      : t("Add");
 
   return (
     <Dialog
@@ -153,17 +159,17 @@ export default function TTSServiceDialog({
       onOpenChange={(next) => {
         if (!submitting) handleOpenChange(next);
       }}
-      title={isEdit ? "编辑 TTS 服务" : "添加 TTS 服务"}
+      title={isEdit ? t("Edit TTS service") : t("Add TTS service")}
       description={
         !isEdit
-          ? "Open TTS 类型的服务在添加时会请求 /healthz 拉取 capabilities，失败将无法添加"
+          ? t("Open TTS services must return capabilities from /healthz before they can be added.")
           : undefined
       }
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
             {submitLabel}
@@ -175,21 +181,21 @@ export default function TTSServiceDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
-                <field.InputField placeholder="例如：本地 OpenTTS" autoFocus />
+              <field.FormField label={t("Name")}>
+                <field.InputField placeholder={t("Example: Local OpenTTS")} autoFocus />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="type">
             {(field) => (
-              <field.FormField label="类型">
+              <field.FormField label={t("Type")}>
                 <field.SelectField options={TYPE_OPTIONS} disabled={isEdit} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="baseUrl">
             {(field) => (
-              <field.FormField label="Base URL">
+              <field.FormField label={t("Base URL")}>
                 <field.InputField
                   placeholder={
                     form.getFieldValue("type") === TTSServiceType.OpenTTS
@@ -203,33 +209,42 @@ export default function TTSServiceDialog({
           <form.AppField name="previewBaseUrl">
             {(field) => (
               <field.FormField
-                label="试听 Base URL"
-                description="可选；声音试听音频为相对路径时使用此地址拼接，留空则使用 Base URL"
+                label={t("Preview base URL")}
+                description={t(
+                  "Optional base URL for relative voice preview paths. Defaults to the service base URL.",
+                )}
               >
-                <field.InputField placeholder="留空则使用 Base URL" />
+                <field.InputField placeholder={t("Leave blank to use the base URL")} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="bearerToken">
             {(field) => (
               <field.FormField
-                label="Bearer Token"
+                label={t("Bearer token")}
                 description={
-                  isEdit ? "留空则保留原 Token，输入则覆盖更新" : "可选；部署启用了鉴权时填写"
+                  isEdit
+                    ? t("Leave blank to keep the current token, or enter a replacement")
+                    : t("Optional. Enter a token if authentication is enabled.")
                 }
               >
-                <field.PasswordField placeholder={isEdit ? "留空保持不变" : "可选"} />
+                <field.PasswordField
+                  placeholder={isEdit ? t("Leave blank to keep current value") : t("Optional")}
+                />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="responseFormat">
             {(field) => (
-              <field.FormField label="音频格式" description="可选；不选则使用 TTS 服务的默认格式">
+              <field.FormField
+                label={t("Audio format")}
+                description={t("Optional. Defaults to the TTS service format.")}
+              >
                 <field.SelectField
                   options={RESPONSE_FORMAT_OPTIONS}
                   className="w-full"
                   clearable
-                  placeholder="使用服务默认格式"
+                  placeholder={t("Use service default format")}
                 />
               </field.FormField>
             )}

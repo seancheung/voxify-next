@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { segments, ttsGenerations } from "@/db/schema";
+import { t } from "@/i18n";
 import { finalizeUpload } from "@/lib/files.server";
 import { buildObjectKey, deleteObject, uploadObject } from "@/lib/storage.server";
 
@@ -15,7 +16,7 @@ export const saveEditedAudio = createServerFn({ method: "POST" })
     const audio = data.get("audio");
     const maxBytes = 50 * 1024 * 1024;
     if (!(audio instanceof Blob) || audio.size <= 44 || audio.size > maxBytes)
-      throw new Error("音频为空或超过 50 MB");
+      throw new Error(t("Audio is empty or exceeds 50 MB"));
     const bytes = Buffer.from(await audio.arrayBuffer());
     const channels = bytes.readUInt16LE(22);
     const rate = bytes.readUInt32LE(24);
@@ -31,7 +32,7 @@ export const saveEditedAudio = createServerFn({ method: "POST" })
       bytes.readUInt32LE(40) !== bytes.length - 44 ||
       (bytes.length - 44) % (2 * channels) !== 0
     )
-      throw new Error("无效的 PCM WAV 音频");
+      throw new Error(t("Invalid PCM WAV audio"));
     const path = buildObjectKey("audio", "audio/wav");
     try {
       await uploadObject(path, bytes);
@@ -41,7 +42,7 @@ export const saveEditedAudio = createServerFn({ method: "POST" })
           .from(ttsGenerations)
           .where(and(eq(ttsGenerations.id, generationId), eq(ttsGenerations.segmentId, segmentId)))
           .get();
-        if (!source) throw new Error("原音频版本不存在");
+        if (!source) throw new Error(t("Source audio version not found"));
         const durationMs = Math.max(
           1,
           Math.round(((bytes.length - 44) * 1000) / (2 * channels * rate)),
@@ -76,7 +77,8 @@ export const saveEditedAudio = createServerFn({ method: "POST" })
           .set({ generationId: version.id, updatedAt: now })
           .where(and(eq(segments.id, segmentId), eq(segments.generationId, generationId)))
           .run();
-        if (!updated.changes) throw new Error("当前版本已更改，请重新打开音频编辑器");
+        if (!updated.changes)
+          throw new Error(t("The audio version changed. Reopen the audio editor."));
       });
     } catch (error) {
       await deleteObject(path);

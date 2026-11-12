@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { t } from "@/i18n";
 
 const FFPROBE_BIN = process.env.FFPROBE_PATH ?? "ffprobe";
 
@@ -19,7 +20,12 @@ function parseDurationOutput(out: string): number {
 function logProbeFailure(source: string, stderr: string, raw: string) {
   const tail = stderr.trim().slice(-500);
   console.warn(
-    `ffprobe 未能获取音频时长 (${source}): output=${JSON.stringify(raw.trim())}${tail ? `\nstderr: ${tail}` : ""}`,
+    t(
+      "ffprobe could not determine duration ({0}): output={1}{2}",
+      source,
+      JSON.stringify(raw.trim()),
+      tail ? `\nstderr: ${tail}` : "",
+    ),
   );
 }
 
@@ -85,7 +91,7 @@ export async function probeDurationMsFromBuffer(buffer: Buffer): Promise<number>
         stdio: ["pipe", "pipe", "pipe"],
       });
     } catch (err) {
-      console.warn("ffprobe spawn 失败:", err);
+      console.warn(t("Failed to start ffprobe:"), err);
       resolve(0);
       return;
     }
@@ -101,7 +107,7 @@ export async function probeDurationMsFromBuffer(buffer: Buffer): Promise<number>
       // ffprobe may close stdin once it has enough bytes; swallow EPIPE.
     });
     proc.once("error", (err) => {
-      console.warn("ffprobe 不可用:", err.message);
+      console.warn(t("ffprobe unavailable:"), err.message);
       resolve(0);
     });
     proc.once("close", () => {

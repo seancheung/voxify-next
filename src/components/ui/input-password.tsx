@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
+import { t } from "@/i18n";
 
 const variants = cva(
   "inline-flex h-8 min-w-50 items-center justify-center gap-1.5 rounded-md border bg-base-100 px-3 text-sm text-content-200 transition-all has-icon icon:text-content-400",
@@ -62,7 +63,7 @@ export default function InputPassword({
         tabIndex={-1}
         disabled={disabled ?? false}
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? "隐藏密码" : "显示密码"}
+        aria-label={visible ? t("Hide password") : t("Show password")}
         className="-mr-1 inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-400 transition-colors has-icon not-disabled:hover:text-content-200"
       >
         {visible ? <EyeOffIcon /> : <EyeIcon />}

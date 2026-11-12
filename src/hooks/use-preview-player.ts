@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 
 export type PreviewPlayer = {
   playingId: string | null;
@@ -53,7 +54,7 @@ export function usePreviewPlayer(): PreviewPlayer {
     } catch (err) {
       if (currentIdRef.current !== id) return;
       toast.error({
-        title: "试听加载失败",
+        title: t("Failed to load preview"),
         description: err instanceof Error ? err.message : String(err),
       });
       stop();
@@ -77,7 +78,7 @@ export function usePreviewPlayer(): PreviewPlayer {
     };
     const failed = () => {
       if (soundRef.current === sound) {
-        toast.error({ title: "试听播放失败" });
+        toast.error({ title: t("Preview playback failed") });
         stop();
       }
     };

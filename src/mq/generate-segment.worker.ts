@@ -10,6 +10,7 @@ import {
   ttsServices,
   voices,
 } from "@/db/schema";
+import { t } from "@/i18n";
 import { probeDurationMsFromBuffer } from "@/lib/audio-probe.server";
 import { finalizeUpload } from "@/lib/files.server";
 import { buildObjectKey, deleteObject, uploadObject } from "@/lib/storage.server";
@@ -19,7 +20,7 @@ import mime from "@/utils/mime";
 
 class JobCancelledError extends Error {
   constructor() {
-    super("已取消");
+    super(t("Canceled"));
     this.name = "JobCancelledError";
   }
 }
@@ -120,16 +121,16 @@ async function callTTS(
 
 export async function processTTSJob(segmentId: number, signal: AbortSignal): Promise<void> {
   const [segment] = await db.select().from(segments).where(eq(segments.id, segmentId));
-  if (!segment) throw new Error(`segment ${segmentId} 不存在`);
+  if (!segment) throw new Error(t("Segment {0} not found", segmentId));
 
   const content = (segment.content ?? "").trim();
-  if (!content) throw new Error("segment content 为空");
+  if (!content) throw new Error(t("Segment content is empty"));
 
   const [chapter] = await db.select().from(chapters).where(eq(chapters.id, segment.chapterId));
-  if (!chapter) throw new Error("chapter 不存在");
+  if (!chapter) throw new Error(t("Missing chapter"));
 
   const [project] = await db.select().from(projects).where(eq(projects.id, chapter.projectId));
-  if (!project) throw new Error("project 不存在");
+  if (!project) throw new Error(t("Missing project"));
 
   let narrator: typeof narrators.$inferSelect | undefined;
   if (segment.narratorId) {
@@ -144,16 +145,16 @@ export async function processTTSJob(segmentId: number, signal: AbortSignal): Pro
     chapter.voiceId,
     project.voiceId,
   );
-  if (!voiceId) throw new Error("没有可用的 voice");
+  if (!voiceId) throw new Error(t("No available voice"));
 
   const [voice] = await db.select().from(voices).where(eq(voices.id, voiceId));
-  if (!voice) throw new Error("voice 不存在");
+  if (!voice) throw new Error(t("Missing voice"));
 
   const [service] = await db
     .select()
     .from(ttsServices)
     .where(eq(ttsServices.id, voice.ttsServiceId));
-  if (!service) throw new Error("TTS 服务不存在");
+  if (!service) throw new Error(t("TTS service not found"));
 
   const merged = mergeSettings(
     service.settings,
@@ -198,9 +199,15 @@ export async function processTTSJob(segmentId: number, signal: AbortSignal): Pro
 
   if (duration <= 0) {
     deleteObject(path).catch((err) => {
-      console.warn(`清理失败生成对象 ${path} 失败:`, err);
+      console.warn(t("Failed to clean up failed generation object {0}:", path), err);
     });
-    throw new Error(`无法获取音频时长 (${buffer.length}B, ${contentType})，已放弃此次生成`);
+    throw new Error(
+      t(
+        "Could not determine audio duration ({0} bytes, {1}). Generation abandoned.",
+        buffer.length,
+        contentType,
+      ),
+    );
   }
 
   const ext = mime.getExtension(contentType) ?? "bin";

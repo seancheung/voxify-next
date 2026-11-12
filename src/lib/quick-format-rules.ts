@@ -1,12 +1,43 @@
 import { z } from "zod";
+import { t } from "@/i18n";
 
 export const punctuationGroups = [
-  { chars: "。", label: "句号" },
-  { chars: "？?", label: "问号" },
-  { chars: "！!", label: "叹号" },
-  { chars: "；;", label: "分号" },
-  { chars: "：:", label: "冒号" },
-  { chars: "…", label: "省略号" },
+  {
+    chars: "。",
+    get label() {
+      return t("Period");
+    },
+  },
+  {
+    chars: "？?",
+    get label() {
+      return t("Question mark");
+    },
+  },
+  {
+    chars: "！!",
+    get label() {
+      return t("Exclamation mark");
+    },
+  },
+  {
+    chars: "；;",
+    get label() {
+      return t("Semicolon");
+    },
+  },
+  {
+    chars: "：:",
+    get label() {
+      return t("Colon");
+    },
+  },
+  {
+    chars: "…",
+    get label() {
+      return t("Ellipsis");
+    },
+  },
 ] as const;
 
 const schema = z.object({

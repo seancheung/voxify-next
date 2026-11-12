@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { chapters, files, narrators, segments, ttsGenerations } from "@/db/schema";
+import { t } from "@/i18n";
 import type { TTSPayload, VoiceSettings } from "@/types/tts";
 
 const draftSegmentSchema = z.object({
@@ -125,7 +126,7 @@ export const updateSegment = createServerFn({ method: "POST" })
       })
       .from(segments)
       .where(eq(segments.id, data.id));
-    if (!existing) throw new Error("段落不存在");
+    if (!existing) throw new Error(t("Segment not found"));
     const ttsChanged =
       existing.content !== data.content ||
       existing.narratorId !== data.narratorId ||
@@ -199,7 +200,7 @@ export const setSegmentGeneration = createServerFn({ method: "POST" })
       .from(ttsGenerations)
       .where(eq(ttsGenerations.id, data.generationId));
     if (!gen || gen.segmentId !== data.segmentId) {
-      throw new Error("音频记录不属于该段落");
+      throw new Error(t("Audio record does not belong to this segment"));
     }
     await db
       .update(segments)
@@ -310,7 +311,7 @@ export const syncChapterSegments = createServerFn({ method: "POST" })
       .select({ id: chapters.id, projectId: chapters.projectId })
       .from(chapters)
       .where(and(eq(chapters.id, data.chapterId), isNull(chapters.deletedAt)));
-    if (!chapter) throw new Error("章节不存在");
+    if (!chapter) throw new Error(t("Chapter not found"));
 
     const now = new Date();
     type Preserved = { id: number; sortOrder: number };
@@ -495,7 +496,7 @@ export const getSegmentGenerationUrl = createServerFn({ method: "GET" })
         .from(ttsGenerations)
         .innerJoin(files, eq(files.id, ttsGenerations.fileId))
         .where(eq(ttsGenerations.id, data.id));
-      if (!row) throw new Error("音频不存在");
+      if (!row) throw new Error(t("Audio not found"));
       const { fileDownloadUrl } = await import("@/lib/files.server");
       const url = await fileDownloadUrl(row, {
         asAttachment: data.download,
@@ -524,7 +525,7 @@ export const getSegmentGenerationInfo = createServerFn({ method: "GET" })
       })
       .from(ttsGenerations)
       .where(eq(ttsGenerations.id, data.id));
-    if (!row) throw new Error("生成记录不存在");
+    if (!row) throw new Error(t("Generation record not found"));
     return row;
   });
 

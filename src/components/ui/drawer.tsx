@@ -11,6 +11,7 @@ import {
 import { cva, type VariantProps } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 import { useId } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/utils/cn";
 import Button from "./button";
 
@@ -136,7 +137,7 @@ export default function Drawer({
                     size="sm"
                     shape="circle"
                     onClick={() => onOpenChange?.(false)}
-                    aria-label="Close"
+                    aria-label={t("Close")}
                     className="absolute top-3 right-3"
                   >
                     <XIcon />

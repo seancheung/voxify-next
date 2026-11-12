@@ -12,6 +12,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import Tooltip from "@/components/ui/tooltip";
+import { t } from "@/i18n";
 import { saveEditedAudio } from "@/lib/segment-audio.functions";
 import { getSegmentGenerationUrl } from "@/lib/segments.functions";
 import { editSelection, encodeWav } from "@/utils/segment-audio";
@@ -61,7 +62,7 @@ export default function SegmentAudioDialog({
       context.current = ctx;
       const { url } = await getSegmentGenerationUrl({ data: { id: generationId } });
       const response = await fetch(url, { signal: abort.signal });
-      if (!response.ok) throw new Error("音频加载失败");
+      if (!response.ok) throw new Error(t("Failed to load audio"));
       const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
       if (!abort.signal.aborted) setAudio(buffer);
     }
@@ -196,12 +197,12 @@ export default function SegmentAudioDialog({
 
   const playbackStart = cursor >= total ? 0 : cursor;
   const playbackLabel = playing
-    ? "停止"
+    ? t("Stop")
     : selected
-      ? "循环播放选区"
+      ? t("Loop selection")
       : playbackStart === 0
-        ? "从头播放"
-        : "从光标处播放";
+        ? t("Play from start")
+        : t("Play from cursor");
 
   function togglePlayback() {
     if (playing) stop();
@@ -278,7 +279,7 @@ export default function SegmentAudioDialog({
       data.set("generationId", String(generationId));
       data.set("audio", encodeWav(audio), "edited.wav");
       await saveEditedAudio({ data });
-      toast.success("已保存为新的音频版本");
+      toast.success(t("Saved as a new audio version"));
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -290,7 +291,7 @@ export default function SegmentAudioDialog({
   return (
     <Dialog
       open
-      title="编辑音频"
+      title={t("Edit audio")}
       size="lg"
       closable={!saving}
       onOpenChange={(open) => {
@@ -299,10 +300,10 @@ export default function SegmentAudioDialog({
       footer={
         <>
           <Button variant="ghost" disabled={saving} onClick={onClose}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={!history.past.length || saving} onClick={save}>
-            {saving ? "保存中…" : "保存为新版本"}
+            {saving ? t("Saving…") : t("Save as new version")}
           </Button>
         </>
       }
@@ -315,9 +316,9 @@ export default function SegmentAudioDialog({
       {audio ? (
         <fieldset disabled={saving} className="min-w-0 space-y-4">
           <div className="flex justify-between text-xs text-content-300">
-            <span>拖动选择 · 滚轮缩放 · 中键拖动平移</span>
+            <span>{t("Drag to select · Scroll to zoom · Middle-drag to pan")}</span>
             <span>
-              {(cursor / audio.sampleRate).toFixed(3)} / {audio.duration.toFixed(3)} 秒
+              {(cursor / audio.sampleRate).toFixed(3)} / {audio.duration.toFixed(3)} {t("seconds")}
             </span>
           </div>
           <div
@@ -383,13 +384,13 @@ export default function SegmentAudioDialog({
             />
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content="回到片段开头">
+            <Tooltip content={t("Return to start")}>
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="回到片段开头"
+                  aria-label={t("Return to start")}
                   disabled={playing}
                   onClick={() => {
                     stop();
@@ -402,7 +403,7 @@ export default function SegmentAudioDialog({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip content={`${playbackLabel}（空格）`}>
+            <Tooltip content={t("{0} (Space)", playbackLabel)}>
               <Button
                 variant="ghost"
                 size="sm"
@@ -414,13 +415,13 @@ export default function SegmentAudioDialog({
               </Button>
             </Tooltip>
             <span className="mx-2 h-5 border-l border-content-400/30" />
-            <Tooltip content="删除选区（Delete）">
+            <Tooltip content={t("Delete selection (Delete)")}>
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="删除选区"
+                  aria-label={t("Delete selection")}
                   disabled={!selected || end - start === total}
                   onClick={() => edit(false)}
                 >
@@ -428,13 +429,13 @@ export default function SegmentAudioDialog({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip content="静音选区（Backspace）">
+            <Tooltip content={t("Mute selection (Backspace)")}>
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="静音选区"
+                  aria-label={t("Mute selection")}
                   aria-keyshortcuts="Backspace"
                   disabled={!selected}
                   onClick={() => edit(true)}
@@ -444,13 +445,13 @@ export default function SegmentAudioDialog({
               </span>
             </Tooltip>
             <span className="mx-2 h-5 border-l border-content-400/30" />
-            <Tooltip content="撤销（Ctrl/⌘+Z）">
+            <Tooltip content={t("Undo (Ctrl/⌘+Z)")}>
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="撤销"
+                  aria-label={t("Undo")}
                   disabled={!history.past.length}
                   onClick={() => restore(false)}
                 >
@@ -458,13 +459,13 @@ export default function SegmentAudioDialog({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip content="重做（Ctrl/⌘+Shift+Z 或 Ctrl+Y）">
+            <Tooltip content={t("Redo (Ctrl/⌘+Shift+Z or Ctrl+Y)")}>
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="重做"
+                  aria-label={t("Redo")}
                   disabled={!history.future.length}
                   onClick={() => restore(true)}
                 >
@@ -475,7 +476,7 @@ export default function SegmentAudioDialog({
             <span className="ml-auto text-xs text-content-300">{view.zoom.toFixed(1)}×</span>
           </div>
           <div className="flex flex-wrap gap-4">
-            {(["起点（秒）", "终点（秒）"] as const).map((label, i) => (
+            {([t("Start (seconds)"), t("End (seconds)")] as const).map((label, i) => (
               <label key={label} className="flex items-center gap-2 text-sm">
                 {label}
                 <input
@@ -504,7 +505,7 @@ export default function SegmentAudioDialog({
           </div>
         </fieldset>
       ) : (
-        !error && <p>正在加载音频…</p>
+        !error && <p>{t("Loading audio…")}</p>
       )}
     </Dialog>
   );

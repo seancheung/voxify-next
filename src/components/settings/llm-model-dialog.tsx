@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   createLLMModel,
   createLLMModelSchema,
@@ -75,7 +76,7 @@ export default function LLMModelDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEdit ? "更新失败" : "添加失败",
+        title: isEdit ? t("Update failed") : t("Failed to add"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -112,15 +113,15 @@ export default function LLMModelDialog({
       onOpenChange={(next) => {
         if (!submitting) handleOpenChange(next);
       }}
-      title={isEdit ? "编辑模型" : "添加模型"}
+      title={isEdit ? t("Edit model") : t("Add model")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : isEdit ? "保存" : "添加"}
+            {submitting ? t("Saving…") : isEdit ? t("Save") : t("Add")}
           </Button>
         </>
       }
@@ -130,38 +131,46 @@ export default function LLMModelDialog({
           <form.AppField name="llmServiceId">
             {(field) => (
               <field.FormField
-                label="所属服务"
-                description={isEdit ? "编辑模式下不可修改所属服务" : undefined}
+                label={t("Service provider")}
+                description={
+                  isEdit ? t("The service cannot be changed when editing a model") : undefined
+                }
               >
                 <field.SelectField<number>
                   options={serviceOptions}
                   className="w-full"
                   disabled={isEdit}
-                  placeholder="请选择…"
+                  placeholder={t("Select…")}
                 />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="key">
             {(field) => (
-              <field.FormField label="模型 ID" description="服务商提供的模型标识，例如 gpt-4o-mini">
+              <field.FormField
+                label={t("Model ID")}
+                description={t("Provider model identifier, e.g. gpt-4o-mini")}
+              >
                 <field.InputField placeholder="gpt-4o-mini" autoFocus={!isEdit} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="显示名" description="可与模型 ID 不同">
-                <field.InputField placeholder="例如：GPT-4o mini" />
+              <field.FormField
+                label={t("Display name")}
+                description={t("May differ from the model ID")}
+              >
+                <field.InputField placeholder={t("Example: GPT-4o mini")} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="description">
             {(field) => (
-              <field.FormField label="备注" description="可选">
+              <field.FormField label={t("Notes")} description={t("Optional")}>
                 <field.TextareaField
                   className="h-20 min-h-20 w-full resize-none"
-                  placeholder="可选，简要说明用途"
+                  placeholder={t("Optional description of its use")}
                 />
               </field.FormField>
             )}

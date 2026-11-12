@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { t } from "@/i18n";
 
 const requestSchema = z.object({
   llmModelId: z.number().int().positive(),
@@ -8,8 +9,8 @@ const requestSchema = z.object({
   text: z.string(),
 });
 
-// 格式化任务输出 ≈ 输入（提示词只允许换行 / 加角色标注）。
-// 中文最坏约 1.6 token/字，再留 1024 token 给角色标注、换行和余量。
+// Formatting preserves the input, adding only line breaks and speaker tags.
+// Allow 1.6 tokens per Chinese character plus 1024 tokens of headroom.
 function estimateMaxOutputTokens(text: string): number {
   return Math.ceil(text.length * 1.6) + 1024;
 }
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/api/llm/format-stream")({
         } catch (err) {
           return new Response(
             JSON.stringify({
-              error: err instanceof Error ? err.message : "请求参数错误",
+              error: err instanceof Error ? err.message : t("Invalid request parameters"),
             }),
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
@@ -45,14 +46,14 @@ export const Route = createFileRoute("/api/llm/format-stream")({
           .innerJoin(llmServices, eq(llmModels.llmServiceId, llmServices.id))
           .where(eq(llmModels.id, parsed.llmModelId));
         if (!model) {
-          return new Response(JSON.stringify({ error: "LLM 模型不存在" }), {
+          return new Response(JSON.stringify({ error: t("LLM model not found") }), {
             status: 404,
             headers: { "Content-Type": "application/json" },
           });
         }
         const [prompt] = await db.select().from(prompts).where(eq(prompts.id, parsed.promptId));
         if (!prompt) {
-          return new Response(JSON.stringify({ error: "提示词不存在" }), {
+          return new Response(JSON.stringify({ error: t("Prompt not found") }), {
             status: 404,
             headers: { "Content-Type": "application/json" },
           });
@@ -107,7 +108,7 @@ export const Route = createFileRoute("/api/llm/format-stream")({
               send({ done: true });
             } catch (err) {
               if (timedOut) {
-                send({ error: `LLM 请求超时（${timeoutMs}ms）` });
+                send({ error: t("LLM request timed out ({0} ms)", timeoutMs) });
               } else if ((err as { name?: string })?.name !== "AbortError") {
                 send({
                   error: err instanceof Error ? err.message : String(err),

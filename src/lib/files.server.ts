@@ -1,6 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { type FileRow, files } from "@/db/schema";
+import { t } from "@/i18n";
 import { deleteObject } from "./storage.server";
 
 type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -16,7 +17,7 @@ export function finalizeUpload(
   tx: DbOrTx = db,
 ) {
   if (input.fileSize > input.maxBytes) {
-    throw new Error("文件过大");
+    throw new Error(t("File too large"));
   }
   return tx
     .insert(files)

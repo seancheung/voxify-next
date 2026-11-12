@@ -4,6 +4,7 @@ import ScriptPanel from "@/components/projects/tabs/script-panel";
 import SegmentsPanel from "@/components/projects/tabs/segments-panel";
 import SettingsPanel from "@/components/projects/tabs/settings-panel";
 import StatsPanel from "@/components/projects/tabs/stats-panel";
+import { t } from "@/i18n";
 import type { ChapterListItem } from "@/lib/chapters.functions";
 
 export const PROJECT_TABS = [
@@ -41,7 +42,7 @@ export function ProjectTabPanel({
   if (CHAPTER_REQUIRED_TABS[tab] && !chapter) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-content-400">
-        还没有章节，请先在左侧创建一个章节
+        {t("Create a chapter in the sidebar to get started")}
       </div>
     );
   }

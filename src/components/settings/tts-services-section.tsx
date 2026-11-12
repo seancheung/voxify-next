@@ -17,6 +17,7 @@ import Skeleton from "@/components/ui/skeleton";
 import Switch from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { t } from "@/i18n";
 import {
   deleteTTSService,
   listTTSServices,
@@ -31,7 +32,9 @@ import Badge from "../ui/badge";
 
 const TYPE_LABELS: Record<TTSServiceType, string> = {
   [TTSServiceType.OpenTTS]: "Open TTS",
-  [TTSServiceType.OpenAITTS]: "OpenAI TTS 兼容",
+  get [TTSServiceType.OpenAITTS]() {
+    return t("OpenAI TTS compatible");
+  },
 };
 
 export default function TTSServicesSection() {
@@ -62,7 +65,7 @@ export default function TTSServicesSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tts-services"] }),
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -73,11 +76,11 @@ export default function TTSServicesSection() {
       qc.invalidateQueries({ queryKey: ["tts-services"] });
       qc.invalidateQueries({ queryKey: ["voices"] });
       setConfirmingDelete(null);
-      toast.success("已删除 TTS 服务");
+      toast.success(t("TTS service deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -88,13 +91,13 @@ export default function TTSServicesSection() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["tts-services"] });
       toast.success({
-        title: "连接成功",
-        description: `状态 ${res.status}，延迟 ${res.latencyMs} ms`,
+        title: t("Connection successful"),
+        description: t("Status {0}, latency {1} ms", res.status, res.latencyMs),
       });
     },
     onError: (err) =>
       toast.error({
-        title: "连接失败",
+        title: t("Connection failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
     onSettled: () => setBusyId(null),
@@ -106,13 +109,19 @@ export default function TTSServicesSection() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["voices"] });
       toast.success({
-        title: "声音库已同步",
-        description: `共 ${res.total} 个，新增 ${res.added}、更新 ${res.updated}、移除 ${res.removed}`,
+        title: t("Voice library synced"),
+        description: t(
+          "{0} total, {1} added, {2} updated, {3} removed",
+          res.total,
+          res.added,
+          res.updated,
+          res.removed,
+        ),
       });
     },
     onError: (err) =>
       toast.error({
-        title: "同步失败",
+        title: t("Sync failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
     onSettled: () => setBusyId(null),
@@ -122,14 +131,16 @@ export default function TTSServicesSection() {
     <section className="rounded-lg border border-content-400/20 bg-base-200 p-6">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl text-content-100">TTS 服务</h2>
+          <h2 className="text-xl text-content-100">{t("TTS services")}</h2>
           <p className="mt-1 text-sm text-content-300">
-            添加文本转语音服务，Open TTS 类型支持声音库同步与连接测试
+            {t(
+              "Connect text-to-speech services. Open TTS supports voice sync and connection tests.",
+            )}
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          添加服务
+          {t("Add service")}
         </Button>
       </header>
 
@@ -141,7 +152,7 @@ export default function TTSServicesSection() {
         </ul>
       ) : isLoading ? null : services.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-content-400/15 py-12 text-content-400">
-          <p className="text-sm">还没有 TTS 服务，点击右上角添加</p>
+          <p className="text-sm">{t("Add a TTS service to get started")}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -190,7 +201,7 @@ export default function TTSServicesSection() {
                         disabled={testing || !svc.enabled}
                       >
                         <PlugIcon />
-                        {testing ? "测试中…" : "测试"}
+                        {testing ? t("Testing…") : t("Test")}
                       </Button>
                       <Button
                         variant="ghost"
@@ -199,7 +210,7 @@ export default function TTSServicesSection() {
                         disabled={syncing || !svc.enabled}
                       >
                         <RefreshCcwIcon className={cn(syncing && "animate-spin")} />
-                        {syncing ? "同步中…" : "同步声音"}
+                        {syncing ? t("Syncing…") : t("Sync voices")}
                       </Button>
                     </>
                   )}
@@ -207,28 +218,28 @@ export default function TTSServicesSection() {
                     value={svc.enabled ?? false}
                     onChange={(enabled) => toggleMut.mutate({ id: svc.id, enabled })}
                     size="sm"
-                    aria-label={svc.enabled ? "禁用" : "启用"}
+                    aria-label={svc.enabled ? t("Disable") : t("Enable")}
                   />
                   <Dropdown
                     align="end"
                     items={[
                       {
                         key: "edit",
-                        label: "编辑",
+                        label: t("Edit"),
                         icon: <PencilIcon />,
                         onSelect: () => setEditing(svc),
                       },
                       { type: "separator" },
                       {
                         key: "delete",
-                        label: "删除",
+                        label: t("Delete"),
                         icon: <TrashIcon />,
                         danger: true,
                         onSelect: () => setConfirmingDelete(svc),
                       },
                     ]}
                   >
-                    <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+                    <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
                       <MoreHorizontalIcon />
                     </Button>
                   </Dropdown>
@@ -255,10 +266,13 @@ export default function TTSServicesSection() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除 TTS 服务"
+        title={t("Delete TTS service?")}
         description={
           confirmingDelete
-            ? `服务 “${confirmingDelete.name}” 将被删除，关联的声音也会一并移除，操作不可撤销。`
+            ? t(
+                "“{0}” and its associated voices will be permanently removed.",
+                confirmingDelete.name,
+              )
             : undefined
         }
         size="sm"
@@ -269,7 +283,7 @@ export default function TTSServicesSection() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -278,7 +292,7 @@ export default function TTSServicesSection() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }

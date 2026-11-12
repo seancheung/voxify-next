@@ -24,6 +24,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import Tooltip from "@/components/ui/tooltip";
+import { t } from "@/i18n";
 import type { ChapterListItem } from "@/lib/chapters.functions";
 import type { QuickFormatRules } from "@/lib/quick-format-rules";
 import {
@@ -192,20 +193,20 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
       qc.invalidateQueries({ queryKey: ["narrators", chapter.projectId] });
       qc.invalidateQueries({ queryKey: ["chapters", chapter.projectId] });
       const parts: string[] = [];
-      if (result.inserted > 0) parts.push(`新增 ${result.inserted}`);
-      if (result.removed > 0) parts.push(`删除 ${result.removed}`);
+      if (result.inserted > 0) parts.push(t("Added {0}", result.inserted));
+      if (result.removed > 0) parts.push(t("Removed {0}", result.removed));
       if (result.preserved > 0 && (result.inserted > 0 || result.removed > 0)) {
-        parts.push(`保留 ${result.preserved}`);
+        parts.push(t("Kept {0}", result.preserved));
       }
       if (result.narratorsCreated > 0) {
-        parts.push(`新建角色 ${result.narratorsCreated}`);
+        parts.push(t("Created character {0}", result.narratorsCreated));
       }
-      toast.success(parts.length > 0 ? `已保存（${parts.join("，")}）` : "已保存");
+      toast.success(parts.length > 0 ? t("Saved ({0})", parts.join("，")) : t("Saved"));
       setDiffOpen(false);
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -272,7 +273,7 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
         userAborted = true;
       } else {
         toast.error({
-          title: "智能格式化失败",
+          title: t("Smart formatting failed"),
           description: err instanceof Error ? err.message : String(err),
         });
         setDraft(beforeStreamRef.current);
@@ -308,12 +309,12 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
           disabled={!draft.trim() || syncMut.isPending || streaming}
         >
           <ListRestartIcon />
-          快速格式化
+          {t("Quick format")}
         </Button>
         {streaming ? (
           <Button variant="danger" onClick={abortStream}>
             <SquareIcon />
-            中断处理
+            {t("Interrupt processing")}
           </Button>
         ) : (
           <Button
@@ -322,7 +323,7 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
             disabled={!draft.trim() || syncMut.isPending}
           >
             <WandSparklesIcon />
-            智能格式化
+            {t("Smart format")}
           </Button>
         )}
         <Tooltip
@@ -332,21 +333,21 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
           className="max-w-sm"
           content={<SyntaxHelp />}
         >
-          <Button variant="ghost" size="sm" shape="circle" aria-label="语法说明">
+          <Button variant="ghost" size="sm" shape="circle" aria-label={t("Syntax guide")}>
             <HelpCircleIcon />
           </Button>
         </Tooltip>
         <span className="ml-auto text-xs text-content-300 tabular-nums">
-          {stats.lines} 段 · {stats.chars} 字
+          {t("{0} segments · {1} characters", stats.lines, stats.chars)}
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" onClick={handleReset} disabled={!dirty || streaming}>
             <RotateCcwIcon />
-            重置
+            {t("Reset")}
           </Button>
           <Button onClick={handleSave} disabled={!dirty || syncMut.isPending || streaming}>
             <SaveIcon />
-            保存
+            {t("Save")}
           </Button>
         </div>
       </div>
@@ -382,16 +383,18 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
         onOpenChange={(open) => {
           if (!open && !syncMut.isPending) setDiffOpen(false);
         }}
-        title="确认应用变更"
-        description="保存将按下列差异同步段落，未变更的段落会保留已生成的音频"
+        title={t("Apply changes?")}
+        description={t(
+          "Saving applies these changes to the segments. Unchanged segments retain their generated audio.",
+        )}
         size="lg"
         footer={
           <>
             <Button variant="ghost" onClick={() => setDiffOpen(false)} disabled={syncMut.isPending}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button onClick={() => syncMut.mutate()} disabled={syncMut.isPending}>
-              {syncMut.isPending ? "保存中…" : "确认保存"}
+              {syncMut.isPending ? t("Saving…") : t("Confirm save")}
             </Button>
           </>
         }
@@ -401,7 +404,7 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
 
       {quickFormatOpen && (
         <QuickFormatDialog
-          confirmLabel="应用到编辑器"
+          confirmLabel={t("Apply to editor")}
           onConfirm={confirmQuickFormat}
           onCancel={() => setQuickFormatOpen(false)}
         />
@@ -419,20 +422,22 @@ export default function ScriptPanel({ chapter }: { chapter: ChapterListItem }) {
         onOpenChange={(open) => {
           if (!open) keepCurrentDraft();
         }}
-        title="已中断智能格式化"
-        description="是否还原到处理前的内容？"
+        title={t("Smart formatting interrupted")}
+        description={t("Restore the text from before processing?")}
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={keepCurrentDraft}>
-              保持当前
+              {t("Keep current text")}
             </Button>
-            <Button onClick={restoreBeforeStream}>还原</Button>
+            <Button onClick={restoreBeforeStream}>{t("Restore text")}</Button>
           </>
         }
       >
         <div className="text-sm leading-6 text-content-200">
-          已停止处理。已经流式写入编辑器的内容将保留为当前文本，可选择还原到处理之前的版本。
+          {t(
+            "Processing stopped. The editor contains the streamed text. You can restore the previous version.",
+          )}
         </div>
       </Dialog>
     </div>
@@ -498,7 +503,7 @@ function DiffView({ lines }: { lines: DiffLine[] }) {
   if (lines.length === 0) {
     return (
       <div className="rounded-md border border-content-400/20 bg-base-200 p-6 text-center text-sm text-content-400">
-        没有差异
+        {t("No differences")}
       </div>
     );
   }
@@ -514,14 +519,14 @@ function DiffView({ lines }: { lines: DiffLine[] }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-content-300">变更：</span>
+        <span className="text-content-300">{t("Changes:")}</span>
         <span className="inline-flex items-center gap-1 text-success">
           <span className="font-mono">+{added}</span>
-          <span className="text-xs text-content-300">新增</span>
+          <span className="text-xs text-content-300">{t("Added")}</span>
         </span>
         <span className="inline-flex items-center gap-1 text-error">
           <span className="font-mono">-{removed}</span>
-          <span className="text-xs text-content-300">删除</span>
+          <span className="text-xs text-content-300">{t("Delete")}</span>
         </span>
       </div>
       <div className="max-h-[60vh] overflow-auto rounded-md border border-content-400/20 bg-base-200 font-mono text-xs">
@@ -565,28 +570,34 @@ function DiffRow({ line, colWidth }: { line: DiffLine; colWidth: number }) {
 function SyntaxHelp() {
   return (
     <div className="space-y-2 text-left text-xs leading-5 text-content-200">
-      <div className="text-sm font-semibold text-content-100">脚本语法</div>
+      <div className="text-sm font-semibold text-content-100">{t("Script syntax")}</div>
       <ul className="list-disc space-y-1 pl-4">
         <li>
-          每行一个段落，行内格式：
+          {t("Use one segment per line, in this format:")}
           <code className="ml-1 rounded bg-base-300 px-1 py-0.5 font-mono">
             <span className="text-content-400">[[</span>
-            <span className="text-primary-400">角色名</span>
+            <span className="text-primary-400">{t("Character tag")}</span>
             <span className="text-content-400">]]</span>
-            段落文本
+            {t("Segment text")}
           </code>
         </li>
         <li>
-          省略
+          {t("Omit")}
           <code className="mx-1 rounded bg-base-300 px-1 py-0.5 font-mono">[[…]]</code>
-          表示该段使用默认角色
+          {t("to use the default character")}
         </li>
-        <li>角色名若不存在，保存时会自动在“角色”面板中创建（默认无声音，需手动配置）</li>
-        <li>空行、多余空白、只有 [[角色]] 没有正文的行会在保存时被忽略</li>
         <li>
-          保存按
-          <span className="text-primary-400"> (角色, 文本) </span>
-          联合主键 diff：未变更的段落保留已生成音频
+          {t(
+            "Saving creates missing characters in the Characters panel. Assign their voices there.",
+          )}
+        </li>
+        <li>
+          {t("Saving ignores blank lines, extra whitespace and character tags without text.")}
+        </li>
+        <li>
+          {t("Saving compares")}
+          <span className="text-primary-400">{t(" (character, text) ")}</span>
+          {t("to preserve generated audio for unchanged segments.")}
         </li>
       </ul>
     </div>

@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import { listTTSServices } from "@/lib/tts-services.functions";
 import {
   createVoice,
@@ -62,7 +63,7 @@ export default function VoiceDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEdit ? "更新失败" : "创建失败",
+        title: isEdit ? t("Update failed") : t("Creation failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -108,7 +109,13 @@ export default function VoiceDialog({
   }
 
   const submitting = submitMutation.isPending;
-  const submitLabel = submitting ? (isEdit ? "保存中…" : "创建中…") : isEdit ? "保存" : "创建";
+  const submitLabel = submitting
+    ? isEdit
+      ? t("Saving…")
+      : t("Creating…")
+    : isEdit
+      ? t("Save")
+      : t("Create");
 
   return (
     <Dialog
@@ -116,15 +123,17 @@ export default function VoiceDialog({
       onOpenChange={(next) => {
         if (!submitting) handleOpenChange(next);
       }}
-      title={isEdit ? "编辑声音" : "新建声音"}
+      title={isEdit ? t("Edit voice") : t("New voice")}
       description={
-        isEdit ? undefined : "仅支持为 OpenAI TTS 类型的服务新建声音；name 缺省时与 key 相同"
+        isEdit
+          ? undefined
+          : t("New voices are supported for OpenAI TTS services. The name defaults to the key.")
       }
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button
             disabled={submitting || (!isEdit && serviceOptions.length === 0)}
@@ -140,15 +149,15 @@ export default function VoiceDialog({
           <div className="flex flex-col gap-4">
             <editForm.AppField name="key">
               {(field) => (
-                <field.FormField label="声音 key">
-                  <field.InputField placeholder="例如：alloy" autoFocus />
+                <field.FormField label={t("Voice key")}>
+                  <field.InputField placeholder={t("Example: alloy")} autoFocus />
                 </field.FormField>
               )}
             </editForm.AppField>
             <editForm.AppField name="name">
               {(field) => (
-                <field.FormField label="名称" description="留空则与 key 相同">
-                  <field.InputField placeholder="可选" />
+                <field.FormField label={t("Name")} description={t("Leave blank to use the key")}>
+                  <field.InputField placeholder={t("Optional")} />
                 </field.FormField>
               )}
             </editForm.AppField>
@@ -162,11 +171,13 @@ export default function VoiceDialog({
           <div className="flex flex-col gap-4">
             <createForm.AppField name="ttsServiceId">
               {(field) => (
-                <field.FormField label="TTS 服务">
+                <field.FormField label={t("TTS services")}>
                   <field.SelectField<number>
                     options={serviceOptions}
                     placeholder={
-                      serviceOptions.length === 0 ? "暂无可用的 OpenAI TTS 服务" : "请选择…"
+                      serviceOptions.length === 0
+                        ? t("No available OpenAI TTS services")
+                        : t("Select…")
                     }
                     disabled={serviceOptions.length === 0}
                   />
@@ -175,15 +186,15 @@ export default function VoiceDialog({
             </createForm.AppField>
             <createForm.AppField name="key">
               {(field) => (
-                <field.FormField label="声音 key">
-                  <field.InputField placeholder="例如：alloy" />
+                <field.FormField label={t("Voice key")}>
+                  <field.InputField placeholder={t("Example: alloy")} />
                 </field.FormField>
               )}
             </createForm.AppField>
             <createForm.AppField name="name">
               {(field) => (
-                <field.FormField label="名称" description="留空则与 key 相同">
-                  <field.InputField placeholder="可选" />
+                <field.FormField label={t("Name")} description={t("Leave blank to use the key")}>
+                  <field.InputField placeholder={t("Optional")} />
                 </field.FormField>
               )}
             </createForm.AppField>

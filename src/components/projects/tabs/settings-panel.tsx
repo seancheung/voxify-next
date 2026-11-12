@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { DEFAULT_LOCALE, LOCALES } from "@/constants/locale";
+import { t } from "@/i18n";
 import {
   type ChapterListItem,
   type DeletedChapterListItem,
@@ -111,7 +112,7 @@ export default function SettingsPanel({
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -123,7 +124,7 @@ export default function SettingsPanel({
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -133,10 +134,10 @@ export default function SettingsPanel({
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success({
-        title: "项目已删除",
+        title: t("Project deleted"),
         duration: 8000,
         action: {
-          label: "撤销",
+          label: t("Undo"),
           onClick: () => restoreProjectMut.mutate(id),
         },
       });
@@ -146,7 +147,7 @@ export default function SettingsPanel({
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -171,7 +172,7 @@ export default function SettingsPanel({
     .filter((p) => p.enabled)
     .map((p) => ({ value: p.id, label: p.name }));
 
-  const FALLBACK_PLACEHOLDER = "无";
+  const FALLBACK_PLACEHOLDER = t("None");
   const defaultLlm = llmList.find((m) => m.id === appConfig?.defaultLlmModelId);
   const llmPlaceholder = defaultLlm
     ? `${defaultLlm.llmServiceName} / ${defaultLlm.name}`
@@ -188,8 +189,8 @@ export default function SettingsPanel({
       {chapter && <ChapterSettingsSection chapter={chapter} />}
 
       <SectionCard
-        title="项目设置"
-        description="项目基本信息与默认配置，可在段落级别覆盖"
+        title={t("Project settings")}
+        description={t("Project details and defaults. Individual segments can override defaults.")}
         actions={
           <Button
             variant="danger"
@@ -198,7 +199,7 @@ export default function SettingsPanel({
             onClick={() => removeProjectMut.mutate(projectId)}
           >
             <TrashIcon />
-            删除项目
+            {t("Delete project")}
           </Button>
         }
       >
@@ -207,14 +208,14 @@ export default function SettingsPanel({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <form.AppField name="name">
                 {(field) => (
-                  <field.FormField label="项目名称" className="md:col-span-2">
-                    <field.InputField placeholder="例如：小王子" />
+                  <field.FormField label={t("Project name")} className="md:col-span-2">
+                    <field.InputField placeholder={t("Example: The Little Prince")} />
                   </field.FormField>
                 )}
               </form.AppField>
               <form.AppField name="coverFileId">
                 {(field) => (
-                  <field.FormField label="封面图">
+                  <field.FormField label={t("Cover image")}>
                     <CoverUploader
                       projectId={projectId}
                       name={project.name}
@@ -226,9 +227,9 @@ export default function SettingsPanel({
               </form.AppField>
               <form.AppField name="description">
                 {(field) => (
-                  <field.FormField label="描述">
+                  <field.FormField label={t("Description")}>
                     <field.TextareaField
-                      placeholder="可选，简要介绍这个项目"
+                      placeholder={t("Optional project summary")}
                       className="h-37 min-h-37 w-full min-w-0 resize-none"
                     />
                   </field.FormField>
@@ -236,14 +237,14 @@ export default function SettingsPanel({
               </form.AppField>
               <form.AppField name="author">
                 {(field) => (
-                  <field.FormField label="作者">
-                    <field.InputField placeholder="可选" />
+                  <field.FormField label={t("Author")}>
+                    <field.InputField placeholder={t("Optional")} />
                   </field.FormField>
                 )}
               </form.AppField>
               <form.AppField name="locale">
                 {(field) => (
-                  <field.FormField label="语言">
+                  <field.FormField label={t("Language")}>
                     <field.SelectField options={localeOptions} className="w-full" clearable />
                   </field.FormField>
                 )}
@@ -252,8 +253,8 @@ export default function SettingsPanel({
               <form.AppField name="llmModelId">
                 {(field) => (
                   <field.FormField
-                    label="默认 LLM 模型"
-                    description="脚本智能切分等功能默认使用的 LLM"
+                    label={t("Default LLM model")}
+                    description={t("LLM used for smart script formatting")}
                   >
                     <field.ComboboxField
                       options={llmOptions}
@@ -266,7 +267,10 @@ export default function SettingsPanel({
               </form.AppField>
               <form.AppField name="promptId">
                 {(field) => (
-                  <field.FormField label="默认提示词" description="智能格式化时默认使用的提示词">
+                  <field.FormField
+                    label={t("Default prompt")}
+                    description={t("Prompt used for smart formatting")}
+                  >
                     <field.SelectField
                       options={promptOptions}
                       className="w-full"
@@ -278,7 +282,10 @@ export default function SettingsPanel({
               </form.AppField>
               <form.AppField name="gap">
                 {(field) => (
-                  <field.FormField label="段落默认间隔" description="毫秒，留空使用全局默认">
+                  <field.FormField
+                    label={t("Default segment gap")}
+                    description={t("Milliseconds. Leave blank to use the global default.")}
+                  >
                     <field.NumberField
                       min={0}
                       max={60_000}
@@ -293,7 +300,10 @@ export default function SettingsPanel({
               </form.AppField>
               <form.AppField name="chapterGap">
                 {(field) => (
-                  <field.FormField label="章节间隔" description="毫秒，留空使用全局默认">
+                  <field.FormField
+                    label={t("Chapter gap")}
+                    description={t("Milliseconds. Leave blank to use the global default.")}
+                  >
                     <field.NumberField
                       min={0}
                       max={600_000}
@@ -396,7 +406,7 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -409,7 +419,7 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -423,17 +433,17 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
       qc.invalidateQueries({ queryKey: ["chapters", projectId] });
       qc.invalidateQueries({ queryKey: ["deleted-chapters", projectId] });
       toast.success({
-        title: "章节已删除",
+        title: t("Chapter deleted"),
         duration: 8000,
         action: {
-          label: "撤销",
+          label: t("Undo"),
           onClick: () => restoreMut.mutate(id),
         },
       });
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -450,8 +460,8 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
 
   return (
     <SectionCard
-      title="章节设置"
-      description="当前选中章节的基本信息"
+      title={t("Chapter settings")}
+      description={t("Details for the selected chapter")}
       actions={
         <Button
           variant="danger"
@@ -460,7 +470,7 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
           onClick={() => removeMut.mutate(chapter.id)}
         >
           <TrashIcon />
-          删除章节
+          {t("Delete chapter")}
         </Button>
       }
     >
@@ -469,16 +479,16 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
           <div className="flex flex-col gap-4">
             <form.AppField name="name">
               {(field) => (
-                <field.FormField label="章节名称">
-                  <field.InputField placeholder="例如：第一章" />
+                <field.FormField label={t("Chapter name")}>
+                  <field.InputField placeholder={t("Example: Chapter One")} />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="description">
               {(field) => (
-                <field.FormField label="描述">
+                <field.FormField label={t("Description")}>
                   <field.TextareaField
-                    placeholder="可选，简要介绍这一章节"
+                    placeholder={t("Optional chapter summary")}
                     rows={4}
                     className="w-full"
                   />
@@ -495,7 +505,10 @@ function ChapterSettingsSection({ chapter }: { chapter: ChapterListItem }) {
 function SettingsPanelSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pb-6">
-      <SectionCard title="章节设置" description="当前选中章节的基本信息">
+      <SectionCard
+        title={t("Chapter settings")}
+        description={t("Details for the selected chapter")}
+      >
         <div className="flex flex-col gap-4">
           <FormFieldSkeleton />
           <div className="flex flex-col gap-1.5">
@@ -505,7 +518,10 @@ function SettingsPanelSkeleton() {
         </div>
       </SectionCard>
 
-      <SectionCard title="项目设置" description="项目基本信息与默认配置，可在段落级别覆盖">
+      <SectionCard
+        title={t("Project settings")}
+        description={t("Project details and defaults. Individual segments can override defaults.")}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormFieldSkeleton className="md:col-span-2" />
           <CoverFieldSkeleton />
@@ -524,8 +540,8 @@ function SettingsPanelSkeleton() {
       </SectionCard>
 
       <SectionCard
-        title="项目维护"
-        description="清理项目中未使用的资源以释放存储空间。所有操作不可撤销，请谨慎操作。"
+        title={t("Project maintenance")}
+        description={t("Free storage by removing unused resources. These actions are permanent.")}
       >
         <ul className="flex flex-col">
           {Array.from({ length: 5 }, (_, i) => (
@@ -599,7 +615,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -611,13 +627,13 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
       setConfirm(null);
       toast.success(
         r.deletedFiles > 0
-          ? `已永久删除章节，并清理 ${r.deletedFiles} 个语音合成文件`
-          : "已永久删除章节",
+          ? t("Permanently deleted the chapter and {0} synthesized audio files", r.deletedFiles)
+          : t("Chapter permanently deleted"),
       );
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -630,17 +646,19 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
 
   return (
     <SectionCard
-      title="回收站"
-      description="此处列出本项目已删除的章节，可恢复或永久删除。永久删除会一并清理章节内段落的语音合成及对应音频文件。"
+      title={t("Recycle bin")}
+      description={t(
+        "Restore or permanently delete chapters. Permanent deletion also removes their generated audio and files.",
+      )}
     >
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>名称</TableHead>
-            <TableHead>段落</TableHead>
-            <TableHead>语音合成</TableHead>
-            <TableHead>删除时间</TableHead>
-            <TableHead className="text-right">操作</TableHead>
+            <TableHead>{t("Name")}</TableHead>
+            <TableHead>{t("Segments")}</TableHead>
+            <TableHead>{t("Speech synthesis")}</TableHead>
+            <TableHead>{t("Deleted at")}</TableHead>
+            <TableHead className="text-right">{t("Actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -648,11 +666,11 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
             <TableRow key={c.id}>
               <TableCell className="text-content-100">{c.name}</TableCell>
               <TableCell className="text-content-300">
-                {c.segmentCount > 0 ? `${c.segmentCount} 个` : "—"}
+                {c.segmentCount > 0 ? t("{0} items", c.segmentCount) : "—"}
               </TableCell>
               <TableCell className="text-content-300">
                 {c.generationCount > 0
-                  ? `${c.generationCount} 条 · ${formatBytes(c.fileSize)}`
+                  ? t("{0} entries · {1}", c.generationCount, formatBytes(c.fileSize))
                   : "—"}
               </TableCell>
               <TableCell className="text-content-300">{relativeTime(c.deletedAt)}</TableCell>
@@ -665,7 +683,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
                     onClick={() => setConfirm({ type: "restore", chapter: c })}
                   >
                     <RotateCcwIcon />
-                    恢复
+                    {t("Restore")}
                   </Button>
                   <Button
                     variant="danger"
@@ -674,7 +692,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
                     onClick={() => setConfirm({ type: "purge", chapter: c })}
                   >
                     <TrashIcon />
-                    永久删除
+                    {t("Delete permanently")}
                   </Button>
                 </div>
               </TableCell>
@@ -688,10 +706,10 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
         onOpenChange={(open) => {
           if (!open && !restoreMut.isPending) setConfirm(null);
         }}
-        title="确认恢复章节"
+        title={t("Restore chapter?")}
         description={
           confirm?.type === "restore"
-            ? `章节 “${confirm.chapter.name}” 将被恢复并重新出现在章节列表中。`
+            ? t("“{0}” will return to the chapter list.", confirm.chapter.name)
             : undefined
         }
         size="sm"
@@ -702,7 +720,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
               onClick={() => setConfirm(null)}
               disabled={restoreMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               disabled={restoreMut.isPending}
@@ -711,7 +729,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
                 restoreMut.mutate(confirm.chapter.id);
               }}
             >
-              {restoreMut.isPending ? "恢复中…" : "确认恢复"}
+              {restoreMut.isPending ? t("Restoring…") : t("Confirm restore")}
             </Button>
           </>
         }
@@ -722,21 +740,27 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
         onOpenChange={(open) => {
           if (!open && !purgeMut.isPending) setConfirm(null);
         }}
-        title="确认永久删除章节"
+        title={t("Permanently delete chapter?")}
         description={
           confirm?.type === "purge"
-            ? `章节 “${confirm.chapter.name}” 及其全部段落${
+            ? t(
+                "“{0}” and all its segments{1} will be permanently removed from storage.",
+                confirm.chapter.name,
                 confirm.chapter.generationCount > 0
-                  ? `、${confirm.chapter.generationCount} 条语音合成（共 ${formatBytes(confirm.chapter.fileSize)}）以及对应的音频文件`
-                  : ""
-              }将从存储中彻底移除，操作不可撤销。`
+                  ? t(
+                      ", {0} generations ({1}) and their audio files",
+                      confirm.chapter.generationCount,
+                      formatBytes(confirm.chapter.fileSize),
+                    )
+                  : "",
+              )
             : undefined
         }
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)} disabled={purgeMut.isPending}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -746,7 +770,7 @@ function ChapterRecycleBinSection({ projectId }: { projectId: number }) {
                 purgeMut.mutate(confirm.chapter.id);
               }}
             >
-              {purgeMut.isPending ? "删除中…" : "确认永久删除"}
+              {purgeMut.isPending ? t("Deleting…") : t("Confirm permanent deletion")}
             </Button>
           </>
         }
@@ -779,7 +803,7 @@ function MaintenanceSection({
 
   function onError(err: unknown) {
     toast.error({
-      title: "操作失败",
+      title: t("Operation failed"),
       description: err instanceof Error ? err.message : String(err),
     });
   }
@@ -792,25 +816,41 @@ function MaintenanceSection({
   const narratorsMut = useMutation({
     mutationFn: () => cleanNarrators({ data: { projectId } }),
     onSuccess: (r) =>
-      afterDone(r.deleted > 0 ? `已删除 ${r.deleted} 个未使用的角色` : "没有可删除的角色"),
+      afterDone(
+        r.deleted > 0
+          ? t("Deleted {0} unused characters", r.deleted)
+          : t("No unused characters to delete"),
+      ),
     onError,
   });
   const candidateMut = useMutation({
     mutationFn: () => clearCandidates({ data: { projectId } }),
     onSuccess: (r) =>
-      afterDone(r.cleared > 0 ? `已清理 ${r.cleared} 条候选语音合成` : "没有可清理的候选语音合成"),
+      afterDone(
+        r.cleared > 0
+          ? t("Cleared {0} alternate generations", r.cleared)
+          : t("No alternate generations to clear"),
+      ),
     onError,
   });
   const orphanMut = useMutation({
     mutationFn: () => cleanOrphans({ data: { projectId } }),
     onSuccess: (r) =>
-      afterDone(r.deleted > 0 ? `已删除 ${r.deleted} 条无主语音合成` : "没有可删除的无主语音合成"),
+      afterDone(
+        r.deleted > 0
+          ? t("Deleted {0} orphaned generations", r.deleted)
+          : t("No orphaned generations to delete"),
+      ),
     onError,
   });
   const outdatedExportsMut = useMutation({
     mutationFn: () => cleanOutdatedExports({ data: { projectId } }),
     onSuccess: (r) =>
-      afterDone(r.deleted > 0 ? `已删除 ${r.deleted} 个过时的导出历史` : "没有可删除的导出历史"),
+      afterDone(
+        r.deleted > 0
+          ? t("Deleted {0} outdated exports", r.deleted)
+          : t("No outdated exports to delete"),
+      ),
     onError,
   });
 
@@ -829,52 +869,67 @@ function MaintenanceSection({
   }> = [
     {
       key: "narrators",
-      title: "删除未使用的角色",
-      label: "删除",
-      description: "删除当前没有任何段落引用的角色",
-      confirmTitle: "确认删除未使用的角色",
-      confirmDescription: `将永久删除 ${stats.narrators.unused} 个未被任何段落引用的角色，操作不可撤销。`,
-      confirmLabel: "确认删除",
-      pendingLabel: "删除中…",
+      title: t("Delete unused characters"),
+      label: t("Delete"),
+      description: t("Delete characters that no segment uses"),
+      confirmTitle: t("Delete unused characters?"),
+      confirmDescription: t(
+        "Permanently delete {0} characters that no segment uses?",
+        stats.narrators.unused,
+      ),
+      confirmLabel: t("Confirm deletion"),
+      pendingLabel: t("Deleting…"),
       disabled: stats.narrators.unused === 0,
       isPending: narratorsMut.isPending,
       run: () => narratorsMut.mutate(),
     },
     {
       key: "candidate-generations",
-      title: "清理候选语音合成",
-      label: "清理",
-      description: "断开候选语音合成与对应段落的关联，使其变为无主语音合成",
-      confirmTitle: "确认清理候选语音合成",
-      confirmDescription: `将断开 ${stats.ttsGenerations.candidate.count} 条候选语音合成与段落的关联，它们会变成无主语音合成（共 ${formatBytes(stats.ttsGenerations.candidate.size)}），可在下面继续删除。`,
-      confirmLabel: "确认清理",
-      pendingLabel: "清理中…",
+      title: t("Clear alternate generations"),
+      label: t("Clear generations"),
+      description: t("Detach alternate generations from their segments, making them orphaned."),
+      confirmTitle: t("Clear alternate generations?"),
+      confirmDescription: t(
+        "Detach {0} alternate generations ({1}) from their segments? You can delete the orphaned generations below.",
+        stats.ttsGenerations.candidate.count,
+        formatBytes(stats.ttsGenerations.candidate.size),
+      ),
+      confirmLabel: t("Confirm cleanup"),
+      pendingLabel: t("Cleaning up…"),
       disabled: stats.ttsGenerations.candidate.count === 0,
       isPending: candidateMut.isPending,
       run: () => candidateMut.mutate(),
     },
     {
       key: "orphan-generations",
-      title: "删除无主语音合成",
-      label: "删除",
-      description: "删除已与段落断开的语音合成及其音频文件",
-      confirmTitle: "确认删除无主语音合成",
-      confirmDescription: `将永久删除 ${stats.ttsGenerations.orphan.count} 条无主语音合成（共 ${formatBytes(stats.ttsGenerations.orphan.size)}）以及对应的音频文件，操作不可撤销。`,
-      confirmLabel: "确认删除",
-      pendingLabel: "删除中…",
+      title: t("Delete orphaned generations"),
+      label: t("Delete"),
+      description: t("Delete detached generations and their audio files"),
+      confirmTitle: t("Delete orphaned generations?"),
+      confirmDescription: t(
+        "Permanently delete {0} orphaned generations ({1}) and their audio files?",
+        stats.ttsGenerations.orphan.count,
+        formatBytes(stats.ttsGenerations.orphan.size),
+      ),
+      confirmLabel: t("Confirm deletion"),
+      pendingLabel: t("Deleting…"),
       disabled: stats.ttsGenerations.orphan.count === 0,
       isPending: orphanMut.isPending,
       run: () => orphanMut.mutate(),
     },
     {
       key: "outdated-exports",
-      title: "删除过时的导出历史",
-      label: "删除",
-      description: "保留最新的一条导出历史，删除其余历史及其音频文件",
-      confirmTitle: "确认删除过时的导出历史",
-      confirmDescription: `将永久删除 ${stats.exports.outdated.count} 个过时的导出历史（共 ${formatBytes(stats.exports.outdated.size)}）以及对应的音频文件，仅保留最新的一条，操作不可撤销。`,
-      confirmLabel: "确认删除",
-      pendingLabel: "删除中…",
+      title: t("Delete outdated exports"),
+      label: t("Delete"),
+      description: t("Keep the latest export and delete older exports and their files"),
+      confirmTitle: t("Delete outdated exports?"),
+      confirmDescription: t(
+        "Permanently delete {0} older exports ({1}) and their audio files? The latest export will be kept.",
+        stats.exports.outdated.count,
+        formatBytes(stats.exports.outdated.size),
+      ),
+      confirmLabel: t("Confirm deletion"),
+      pendingLabel: t("Deleting…"),
       disabled: stats.exports.outdated.count === 0,
       isPending: outdatedExportsMut.isPending,
       run: () => outdatedExportsMut.mutate(),
@@ -885,8 +940,8 @@ function MaintenanceSection({
 
   return (
     <SectionCard
-      title="项目维护"
-      description="清理项目中未使用的资源以释放存储空间。所有操作不可撤销，请谨慎操作。"
+      title={t("Project maintenance")}
+      description={t("Free storage by removing unused resources. These actions are permanent.")}
     >
       <ul className="flex flex-col">
         {actions.map((action, i) => (
@@ -929,7 +984,7 @@ function MaintenanceSection({
               onClick={() => setConfirming(null)}
               disabled={active?.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button variant="danger" disabled={active?.isPending} onClick={() => active?.run()}>
               {active?.isPending ? active.pendingLabel : active?.confirmLabel}
@@ -964,11 +1019,11 @@ function CoverUploader({
 
   async function handleUpload(file: File) {
     if (!file.type.toLowerCase().startsWith("image/")) {
-      toast.error({ title: "仅支持图片文件" });
+      toast.error({ title: t("Choose an image file") });
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error({ title: "图片过大（最大 10MB）" });
+      toast.error({ title: t("Image exceeds 10 MB") });
       return;
     }
     setUploading(true);
@@ -980,7 +1035,7 @@ function CoverUploader({
       commit(result.coverFileId);
     } catch (err) {
       toast.error({
-        title: "上传失败",
+        title: t("Upload failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -1000,7 +1055,7 @@ function CoverUploader({
       <div
         role="button"
         tabIndex={uploading ? -1 : 0}
-        aria-label={hasCover ? "更换封面" : "上传封面"}
+        aria-label={hasCover ? t("Change cover") : t("Upload cover")}
         aria-disabled={uploading}
         onClick={openPicker}
         onKeyDown={(e) => {
@@ -1019,7 +1074,7 @@ function CoverUploader({
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-1 text-content-400">
             <ImageIcon className="size-6" />
-            <span className="text-xs">点击上传</span>
+            <span className="text-xs">{t("Click to upload")}</span>
           </div>
         )}
         {uploading && (
@@ -1030,7 +1085,7 @@ function CoverUploader({
         {hasCover && !uploading && (
           <button
             type="button"
-            aria-label="移除封面"
+            aria-label={t("Remove cover")}
             className="absolute right-1 bottom-1 inline-flex size-6 items-center justify-center rounded-md bg-error/90 text-error-content opacity-0 shadow-sm transition-opacity group-hover:opacity-100 not-disabled:hover:bg-error focus-visible:opacity-100"
             onClick={(e) => {
               e.stopPropagation();
@@ -1041,7 +1096,7 @@ function CoverUploader({
           </button>
         )}
       </div>
-      <span className="text-xs text-content-400">支持 PNG / JPG / WebP，最大 10MB</span>
+      <span className="text-xs text-content-400">{t("PNG, JPG or WebP, up to 10 MB")}</span>
       <input
         ref={fileInputRef}
         type="file"

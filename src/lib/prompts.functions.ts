@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { type PromptRow, prompts } from "@/db/schema";
+import { t } from "@/i18n";
 
 export type PromptListItem = PromptRow;
 
@@ -15,9 +16,17 @@ export const listPrompts = createServerFn({ method: "GET" }).handler(
 const idSchema = z.object({ id: z.number().int().positive() });
 
 const baseFields = {
-  name: z.string().trim().min(1, "请输入名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a name") })
+    .max(120),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
-  content: z.string().trim().min(1, "请输入提示词内容").max(20_000),
+  content: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter prompt content") })
+    .max(20_000),
 };
 
 export const createPromptSchema = z.object(baseFields);
@@ -63,7 +72,7 @@ export const updatePrompt = createServerFn({ method: "POST" })
       })
       .where(eq(prompts.id, data.id))
       .returning();
-    if (!updated) throw new Error("提示词不存在");
+    if (!updated) throw new Error(t("Prompt not found"));
     return updated;
   });
 
@@ -85,8 +94,12 @@ export const deletePrompt = createServerFn({ method: "POST" })
   });
 
 const DEFAULT_PROMPT_PLAIN_ZH = {
-  name: "默认 · 中文文本分段",
-  description: "将中文文本按断句拆分为短段落，每行一段，不分角色",
+  get name() {
+    return t("Default · Chinese segmentation");
+  },
+  get description() {
+    return t("Split Chinese text into short segments, one per line, without character labels");
+  },
   content: `你是一个中文剧本格式化助手。请将用户提供的整段文本按下列规则重新分段输出：
 
 1. 每一行表示一个独立段落，行与行之间只有一个换行符；不允许出现空行或多余空白行。
@@ -109,8 +122,12 @@ const DEFAULT_PROMPT_PLAIN_ZH = {
 };
 
 const DEFAULT_PROMPT_NARRATED_ZH = {
-  name: "默认 · 中文角色识别分段",
-  description: "中文文本分段基础上为每段标注 [[角色名]]，旁白统一用 [[旁白]]",
+  get name() {
+    return t("Default · Chinese speaker identification");
+  },
+  get description() {
+    return t("Split Chinese text and add speaker tags to each segment, including narration");
+  },
   content: `你是一个中文剧本格式化与角色识别助手。请将用户提供的整段文本重新分段，并在每段开头标注讲话人：
 
 1. 每一行表示一个独立段落，行与行之间只有一个换行符；不允许出现空行或多余空白行。
@@ -137,8 +154,12 @@ const DEFAULT_PROMPT_NARRATED_ZH = {
 };
 
 const DEFAULT_PROMPT_PLAIN_EN = {
-  name: "默认 · 英文文本分段",
-  description: "将英文文本按断句拆分为短段落，每行一段，不分角色",
+  get name() {
+    return t("Default · English segmentation");
+  },
+  get description() {
+    return t("Split English text into short segments, one per line, without character labels");
+  },
   content: `You are an English script formatter. Reformat the user-provided text into short paragraphs by following these rules:
 
 1. Each line is one paragraph; lines are separated by a single newline. No empty lines or extra whitespace lines are allowed.
@@ -161,8 +182,14 @@ Output the formatted result directly.`,
 };
 
 const DEFAULT_PROMPT_NARRATED_EN = {
-  name: "默认 · 英文角色识别分段",
-  description: "英文文本分段基础上为每段标注 [[Speaker]]，旁白统一用 [[Narrator]]",
+  get name() {
+    return t("Default · English speaker identification");
+  },
+  get description() {
+    return t(
+      "Split English text and label speakers with [[Speaker]] and narration with [[Narrator]]",
+    );
+  },
   content: `You are an English script formatter and speaker recognizer. Reformat the user-provided text into short paragraphs and tag the speaker of each paragraph:
 
 1. Each line is one paragraph; lines are separated by a single newline. No empty lines or extra whitespace lines are allowed.

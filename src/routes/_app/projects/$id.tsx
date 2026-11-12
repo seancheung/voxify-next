@@ -19,6 +19,7 @@ import { PROJECT_TABS, type ProjectTab, ProjectTabPanel } from "@/components/pro
 import TabIconItem from "@/components/tab-icon-item";
 import Button from "@/components/ui/button";
 import Tabs, { type TabItem } from "@/components/ui/tab";
+import { t } from "@/i18n";
 import {
   type ChapterListItem,
   getProject,
@@ -163,13 +164,13 @@ function RouteComponent() {
             variant="ghost"
             size="sm"
             shape="square"
-            aria-label={panelOpen ? "折叠章节面板" : "展开章节面板"}
+            aria-label={panelOpen ? t("Collapse chapters panel") : t("Expand chapters panel")}
             onClick={() => setPanelOpen((v) => !v)}
           >
             {panelOpen ? <ArrowLeftToLineIcon /> : <ArrowRightFromLineIcon />}
           </Button>
           <Tabs
-            items={TABS}
+            items={getTabs()}
             value={activeTab}
             onChange={handleTabChange}
             className="h-full border-b-0 [&>button]:h-full"
@@ -185,29 +186,31 @@ function RouteComponent() {
 
 const PROJECT_DEFAULT_TAB = "stats" as const;
 
-const TABS: TabItem<ProjectTab>[] = [
-  {
-    value: "stats",
-    label: <TabIconItem icon={LayoutDashboardIcon} title="概览" />,
-  },
-  {
-    value: "text",
-    label: <TabIconItem icon={FileIcon} title="文本" />,
-  },
-  {
-    value: "generate",
-    label: <TabIconItem icon={ListMusicIcon} title="生成" />,
-  },
-  {
-    value: "narrators",
-    label: <TabIconItem icon={UsersRoundIcon} title="角色" />,
-  },
-  { value: "export", label: <TabIconItem icon={DownloadIcon} title="导出" /> },
-  {
-    value: "settings",
-    label: <TabIconItem icon={SettingsIcon} title="设置" />,
-  },
-];
+function getTabs(): TabItem<ProjectTab>[] {
+  return [
+    {
+      value: "stats",
+      label: <TabIconItem icon={LayoutDashboardIcon} title={t("Overview")} />,
+    },
+    {
+      value: "text",
+      label: <TabIconItem icon={FileIcon} title={t("Text")} />,
+    },
+    {
+      value: "generate",
+      label: <TabIconItem icon={ListMusicIcon} title={t("Generate")} />,
+    },
+    {
+      value: "narrators",
+      label: <TabIconItem icon={UsersRoundIcon} title={t("Character")} />,
+    },
+    { value: "export", label: <TabIconItem icon={DownloadIcon} title={t("Exports")} /> },
+    {
+      value: "settings",
+      label: <TabIconItem icon={SettingsIcon} title={t("Settings")} />,
+    },
+  ];
+}
 
 function projectQueryOptions(projectId: number) {
   return {

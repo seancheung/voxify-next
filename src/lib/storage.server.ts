@@ -4,6 +4,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { t } from "@/i18n";
 import mime from "@/utils/mime";
 
 const root = resolve(process.env.STORAGE_PATH || ".storage");
@@ -13,7 +14,7 @@ export function buildObjectKey(directory: "audio" | "covers" | "exports", type: 
 }
 export function storageFile(key: string) {
   if (!/^(?:audio|covers|exports)\/[a-f0-9-]{36}(?:\.[a-z0-9]+)?$/i.test(key))
-    throw new Error("无效的文件路径");
+    throw new Error(t("Invalid file path"));
   return resolve(root, key);
 }
 export async function uploadObject(key: string, bytes: Buffer) {

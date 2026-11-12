@@ -14,6 +14,7 @@ import {
 import { z } from "zod";
 import { db } from "@/db";
 import { ttsServices, voices } from "@/db/schema";
+import { t } from "@/i18n";
 import { TTSServiceType } from "@/types/tts";
 
 export type VoiceListMetadata = {
@@ -233,8 +234,12 @@ export const getVoicesByIds = createServerFn({ method: "GET" })
 const idSchema = z.object({ id: z.number().int().positive() });
 
 const createSchema = z.object({
-  ttsServiceId: z.number().int().positive("请选择 TTS 服务"),
-  key: z.string().trim().min(1, "请输入声音 key").max(120),
+  ttsServiceId: z.number().int().positive(t("Select a TTS service")),
+  key: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a voice key") })
+    .max(120),
   name: z.string().trim().max(120).optional(),
 });
 
@@ -244,9 +249,9 @@ export const createVoice = createServerFn({ method: "POST" })
   .validator((data: z.input<typeof createSchema>) => createSchema.parse(data))
   .handler(async ({ data }): Promise<VoiceListItem> => {
     const [svc] = await db.select().from(ttsServices).where(eq(ttsServices.id, data.ttsServiceId));
-    if (!svc) throw new Error("TTS 服务不存在");
+    if (!svc) throw new Error(t("TTS service not found"));
     if (svc.type !== TTSServiceType.OpenAITTS) {
-      throw new Error("只有 OpenAI TTS 类型的服务支持新建声音");
+      throw new Error(t("Only OpenAI TTS services support creating voices"));
     }
 
     const now = new Date();
@@ -284,7 +289,11 @@ export const createVoice = createServerFn({ method: "POST" })
 
 const updateSchema = z.object({
   id: z.number().int().positive(),
-  key: z.string().trim().min(1, "请输入声音 key").max(120),
+  key: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a voice key") })
+    .max(120),
   name: z.string().trim().max(120).optional(),
 });
 
@@ -298,9 +307,9 @@ export const updateVoice = createServerFn({ method: "POST" })
       .from(voices)
       .innerJoin(ttsServices, eq(ttsServices.id, voices.ttsServiceId))
       .where(eq(voices.id, data.id));
-    if (!row) throw new Error("声音不存在");
+    if (!row) throw new Error(t("Voice not found"));
     if (row.type !== TTSServiceType.OpenAITTS) {
-      throw new Error("只有 OpenAI TTS 类型的服务的声音支持编辑");
+      throw new Error(t("Only OpenAI TTS voices can be edited"));
     }
     const name = data.name?.trim() || data.key;
     await db
@@ -333,9 +342,9 @@ export const deleteVoice = createServerFn({ method: "POST" })
       .from(voices)
       .innerJoin(ttsServices, eq(ttsServices.id, voices.ttsServiceId))
       .where(eq(voices.id, data.id));
-    if (!row) throw new Error("声音不存在");
+    if (!row) throw new Error(t("Voice not found"));
     if (row.type !== TTSServiceType.OpenAITTS) {
-      throw new Error("只有 OpenAI TTS 类型的服务的声音支持删除");
+      throw new Error(t("Only OpenAI TTS voices can be deleted"));
     }
     await db.delete(voices).where(eq(voices.id, data.id));
     return { ok: true as const };

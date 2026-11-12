@@ -12,6 +12,7 @@ import Badge from "@/components/ui/badge";
 import Button from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { t } from "@/i18n";
 import type { VoiceDesignListItem } from "@/lib/voice-designs.functions";
 import { cn } from "@/utils/cn";
 
@@ -59,7 +60,7 @@ export default function VoiceDesignRow({
             shape="circle"
             onClick={onTogglePlay}
             disabled={!isReady || isLoadingAudio}
-            aria-label={isPlaying ? "停止" : "试听"}
+            aria-label={isPlaying ? t("Stop") : t("Preview")}
           >
             {isLoadingAudio ? (
               <Loader2Icon className="animate-spin" />
@@ -74,20 +75,20 @@ export default function VoiceDesignRow({
             items={[
               {
                 key: "download",
-                label: "下载",
+                label: t("Download"),
                 icon: <DownloadIcon />,
                 disabled: !isReady,
                 onSelect: onDownload,
               },
               {
                 key: "rename",
-                label: "重命名",
+                label: t("Rename"),
                 icon: <PencilIcon />,
                 onSelect: onRename,
               },
               {
                 key: "regenerate",
-                label: "重新生成",
+                label: t("Regenerate"),
                 icon: <RefreshCwIcon />,
                 disabled: isPendingOrRunning,
                 onSelect: onRegenerate,
@@ -95,14 +96,14 @@ export default function VoiceDesignRow({
               { type: "separator" },
               {
                 key: "delete",
-                label: "删除",
+                label: t("Delete"),
                 icon: <TrashIcon />,
                 danger: true,
                 onSelect: onDelete,
               },
             ]}
           >
-            <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+            <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
               <MoreHorizontalIcon />
             </Button>
           </Dropdown>
@@ -122,14 +123,14 @@ function StatusBadge({
   if (status === "ready") {
     return (
       <Badge size="sm" variant="success">
-        已就绪
+        {t("Ready")}
       </Badge>
     );
   }
   if (status === "failed") {
     return (
       <Badge size="sm" variant="error" title={errorMessage ?? undefined}>
-        失败
+        {t("Failure")}
       </Badge>
     );
   }
@@ -137,13 +138,13 @@ function StatusBadge({
     return (
       <Badge size="sm" variant="info">
         <Loader2Icon className="size-3 animate-spin" />
-        生成中
+        {t("Generating")}
       </Badge>
     );
   }
   return (
     <Badge size="sm" variant="secondary">
-      排队中
+      {t("Pending")}
     </Badge>
   );
 }

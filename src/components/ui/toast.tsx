@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, XIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useSyncExternalStore } from "react";
+import { t as translate } from "@/i18n";
 import { cn } from "@/utils/cn";
 import Button from "./button";
 
@@ -102,7 +103,10 @@ export function Toaster({ position }: ToasterProps = {}) {
   const ordered = isTop ? items : [...items].reverse();
 
   return (
-    <section className={cn(containerVariants({ position }))} aria-label="通知">
+    <section
+      className={cn(containerVariants({ position }))}
+      aria-label={translate("Notifications")}
+    >
       <AnimatePresence initial={false}>
         {ordered.map((t) => (
           <ToastItem key={t.id} toast={t} fromTop={isTop} />
@@ -201,7 +205,7 @@ function ToastItem({ toast: t, fromTop }: { toast: ToastData; fromTop: boolean }
         size="sm"
         shape="circle"
         onClick={() => dismiss(t.id)}
-        aria-label="Close"
+        aria-label={translate("Close")}
         className="-mr-1 size-6 shrink-0"
       >
         <XIcon />

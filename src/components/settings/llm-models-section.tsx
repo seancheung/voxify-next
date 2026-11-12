@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { t } from "@/i18n";
 import {
   deleteLLMModel,
   type LLMModelListItem,
@@ -58,7 +59,7 @@ export default function LLMModelsSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["llm-models"] }),
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -68,11 +69,11 @@ export default function LLMModelsSection() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["llm-models"] });
       setConfirmingDelete(null);
-      toast.success("已删除模型");
+      toast.success(t("Model deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -81,14 +82,14 @@ export default function LLMModelsSection() {
     <section className="rounded-lg border border-content-400/20 bg-base-200 p-6">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl text-content-100">LLM 模型</h2>
+          <h2 className="text-xl text-content-100">{t("LLM model")}</h2>
           <p className="mt-1 text-sm text-content-300">
-            服务下属的具体模型；可手动添加，也会被服务的同步操作覆盖
+            {t("Models belonging to each service. Syncing a service replaces manual changes.")}
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          添加模型
+          {t("Add model")}
         </Button>
       </header>
 
@@ -96,18 +97,18 @@ export default function LLMModelsSection() {
         <ModelsSkeleton />
       ) : isLoading ? null : models.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-content-400/15 py-12 text-content-400">
-          <p className="text-sm">还没有模型，点击右上角添加或先在服务上同步</p>
+          <p className="text-sm">{t("Add a model or sync a service to get started")}</p>
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>服务</TableHead>
-              <TableHead>模型 ID</TableHead>
-              <TableHead>显示名</TableHead>
-              <TableHead>备注</TableHead>
-              <TableHead className="w-24">启用</TableHead>
-              <TableHead className="w-12 text-right">操作</TableHead>
+              <TableHead>{t("Service")}</TableHead>
+              <TableHead>{t("Model ID")}</TableHead>
+              <TableHead>{t("Display name")}</TableHead>
+              <TableHead>{t("Notes")}</TableHead>
+              <TableHead className="w-24">{t("Enable")}</TableHead>
+              <TableHead className="w-12 text-right">{t("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,7 +138,7 @@ export default function LLMModelsSection() {
                     value={m.enabled ?? false}
                     onChange={(enabled) => toggleMut.mutate({ id: m.id, enabled })}
                     size="sm"
-                    aria-label={m.enabled ? "禁用" : "启用"}
+                    aria-label={m.enabled ? t("Disable") : t("Enable")}
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -146,21 +147,21 @@ export default function LLMModelsSection() {
                     items={[
                       {
                         key: "edit",
-                        label: "编辑",
+                        label: t("Edit"),
                         icon: <PencilIcon />,
                         onSelect: () => setEditing(m),
                       },
                       { type: "separator" },
                       {
                         key: "delete",
-                        label: "删除",
+                        label: t("Delete"),
                         icon: <TrashIcon />,
                         danger: true,
                         onSelect: () => setConfirmingDelete(m),
                       },
                     ]}
                   >
-                    <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+                    <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
                       <MoreHorizontalIcon />
                     </Button>
                   </Dropdown>
@@ -187,10 +188,13 @@ export default function LLMModelsSection() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除模型"
+        title={t("Delete model?")}
         description={
           confirmingDelete
-            ? `模型 “${confirmingDelete.name}” 将被删除。如果该模型来自服务同步，下次同步会重新加回。`
+            ? t(
+                "“{0}” will be deleted. Models from a service will return on the next sync.",
+                confirmingDelete.name,
+              )
             : undefined
         }
         size="sm"
@@ -201,7 +205,7 @@ export default function LLMModelsSection() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -210,7 +214,7 @@ export default function LLMModelsSection() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }
@@ -224,12 +228,12 @@ function ModelsSkeleton() {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>服务</TableHead>
-          <TableHead>模型 ID</TableHead>
-          <TableHead>显示名</TableHead>
-          <TableHead>备注</TableHead>
-          <TableHead className="w-24">启用</TableHead>
-          <TableHead className="w-12 text-right">操作</TableHead>
+          <TableHead>{t("Service")}</TableHead>
+          <TableHead>{t("Model ID")}</TableHead>
+          <TableHead>{t("Display name")}</TableHead>
+          <TableHead>{t("Notes")}</TableHead>
+          <TableHead className="w-24">{t("Enable")}</TableHead>
+          <TableHead className="w-12 text-right">{t("Actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

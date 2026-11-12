@@ -11,6 +11,7 @@ import Radio, { RadioGroup } from "@/components/ui/radio";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { DEFAULT_LOCALE, LOCALES, type LocaleCode } from "@/constants/locale";
+import { t } from "@/i18n";
 import { parseEpubFile } from "@/lib/epub-import";
 import {
   type ImportProjectInput,
@@ -57,12 +58,14 @@ export default function ImportProjectDialog({
     mutationFn: (input: ImportProjectInput) => importFn({ data: input }),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["projects"] });
-      toast.success(`已导入 ${result.chaptersCreated} 个章节，${result.segmentsCreated} 段内容`);
+      toast.success(
+        t("Imported {0} chapters and {1} segments", result.chaptersCreated, result.segmentsCreated),
+      );
       handleOpenChange(false);
     },
     onError: (err) =>
       toast.error({
-        title: "导入失败",
+        title: t("Import failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -77,7 +80,7 @@ export default function ImportProjectDialog({
     validators: { onSubmit: metaSchema },
     onSubmit: async ({ value }) => {
       if (!file) {
-        toast.error({ title: "请先选择导入文件" });
+        toast.error({ title: t("Select a file to import") });
         return;
       }
       setParsing(true);
@@ -85,8 +88,8 @@ export default function ImportProjectDialog({
         const chapters = await readAndSplit(file, strategy, readFormatRules());
         if (chapters.length === 0) {
           toast.error({
-            title: "导入失败",
-            description: "文件没有可导入的内容",
+            title: t("Import failed"),
+            description: t("No importable content in this file"),
           });
           return;
         }
@@ -99,7 +102,7 @@ export default function ImportProjectDialog({
         });
       } catch (err) {
         toast.error({
-          title: "解析失败",
+          title: t("Parsing failed"),
           description: err instanceof Error ? err.message : String(err),
         });
       } finally {
@@ -127,15 +130,15 @@ export default function ImportProjectDialog({
     const ext = picked.name.toLowerCase().split(".").pop() ?? "";
     if (ext !== "txt" && ext !== "epub") {
       toast.error({
-        title: "暂不支持的文件格式",
-        description: "请选择 .txt 或 .epub 文件",
+        title: t("Unsupported file format"),
+        description: t("Choose a .txt or .epub file"),
       });
       return;
     }
     if (picked.size > MAX_FILE_BYTES) {
       toast.error({
-        title: "文件过大",
-        description: "请选择小于 50MB 的文件",
+        title: t("File too large"),
+        description: t("Choose a file smaller than 50 MB"),
       });
       return;
     }
@@ -154,17 +157,17 @@ export default function ImportProjectDialog({
       <Dialog
         open={open && !rulesOpen}
         onOpenChange={handleOpenChange}
-        title="导入内容"
-        description="支持 TXT（导入为单个章节）和 EPUB（按章节拆分导入）"
+        title={t("Import content")}
+        description={t("TXT imports as one chapter. EPUB imports by chapter.")}
         size="md"
         closable={!submitting}
         footer={
           <>
             <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button disabled={submitting || !file} onClick={() => form.handleSubmit()}>
-              {parsing ? "解析中…" : submitMutation.isPending ? "导入中…" : "导入"}
+              {parsing ? t("Parsing…") : submitMutation.isPending ? t("Importing…") : t("Import")}
             </Button>
           </>
         }
@@ -173,28 +176,28 @@ export default function ImportProjectDialog({
           <div className="flex flex-col gap-4">
             <form.AppField name="name">
               {(field) => (
-                <field.FormField label="名称">
-                  <field.InputField placeholder="例如：小王子" autoFocus />
+                <field.FormField label={t("Name")}>
+                  <field.InputField placeholder={t("Example: The Little Prince")} autoFocus />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="author">
               {(field) => (
-                <field.FormField label="作者">
-                  <field.InputField placeholder="可选" />
+                <field.FormField label={t("Author")}>
+                  <field.InputField placeholder={t("Optional")} />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="description">
               {(field) => (
-                <field.FormField label="描述">
-                  <field.InputField placeholder="可选，简要介绍这个项目" />
+                <field.FormField label={t("Description")}>
+                  <field.InputField placeholder={t("Optional project summary")} />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="locale">
               {(field) => (
-                <field.FormField label="语言">
+                <field.FormField label={t("Language")}>
                   <field.SelectField options={localeOptions} className="w-full" />
                 </field.FormField>
               )}
@@ -202,7 +205,8 @@ export default function ImportProjectDialog({
 
             <div className="flex flex-col gap-1.5">
               <div className="text-sm">
-                导入文件<span className="ml-0.5 text-error">*</span>
+                {t("Import file")}
+                <span className="ml-0.5 text-error">*</span>
               </div>
               {file ? (
                 <div className="flex items-center gap-2 rounded-md border border-content-400/30 bg-base-200 px-3 py-2 text-sm">
@@ -217,7 +221,7 @@ export default function ImportProjectDialog({
                     variant="ghost"
                     size="sm"
                     shape="circle"
-                    aria-label="移除文件"
+                    aria-label={t("Remove file")}
                     disabled={submitting}
                     onClick={() => pickFile(null)}
                   >
@@ -232,7 +236,7 @@ export default function ImportProjectDialog({
                   className="self-start"
                 >
                   <UploadIcon />
-                  选择 .txt 或 .epub 文件
+                  {t("Choose a .txt or .epub file to import")}
                 </Button>
               )}
               <input
@@ -246,12 +250,12 @@ export default function ImportProjectDialog({
                 }}
               />
               <p className="text-xs text-content-400">
-                文件大小不超过 50MB；EPUB 会按 spine 顺序拆分章节
+                {t("Up to 50 MB. EPUB chapters follow spine order.")}
               </p>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <div className="text-sm">分段策略</div>
+              <div className="text-sm">{t("Segmentation method")}</div>
               <RadioGroup<SplitStrategy>
                 value={strategy}
                 onChange={setStrategy}
@@ -269,12 +273,12 @@ export default function ImportProjectDialog({
                       label={
                         <span className="flex flex-col gap-0.5">
                           <span className="text-content-100">
-                            {option === "quick" ? "快速格式化" : "普通拆分"}
+                            {option === "quick" ? t("Quick format") : t("Split by line")}
                           </span>
                           <span className="text-xs text-content-300">
                             {option === "quick"
-                              ? "按格式化规则断句、合并短句"
-                              : "按原文换行，每行一个段落"}
+                              ? t("Split at punctuation and merge short sentences")
+                              : t("Create one segment per original line")}
                           </span>
                         </span>
                       }
@@ -287,7 +291,7 @@ export default function ImportProjectDialog({
                         disabled={submitting}
                         onClick={() => setRulesOpen(true)}
                       >
-                        规则设置
+                        {t("Configure rules")}
                       </Button>
                     )}
                   </div>
@@ -298,7 +302,7 @@ export default function ImportProjectDialog({
             {parsing && (
               <div className="flex items-center gap-2 text-xs text-content-300">
                 <Loader2Icon className="size-3.5 animate-spin" />
-                正在解析文件…
+                {t("Parsing file…")}
               </div>
             )}
 
@@ -312,7 +316,7 @@ export default function ImportProjectDialog({
       </Dialog>
       {open && rulesOpen && (
         <QuickFormatDialog
-          confirmLabel="确定"
+          confirmLabel={t("OK")}
           onConfirm={() => setRulesOpen(false)}
           onCancel={() => setRulesOpen(false)}
         />
@@ -331,7 +335,7 @@ async function readAndSplit(
     ? await parseEpubFile(file)
     : [
         {
-          name: file.name.replace(/\.txt$/i, "") || "导入内容",
+          name: file.name.replace(/\.txt$/i, "") || t("Import content"),
           content: await file.text(),
         },
       ];

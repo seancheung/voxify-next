@@ -14,6 +14,7 @@ import Badge from "@/components/ui/badge";
 import Button from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import Progress from "@/components/ui/progress";
+import { t } from "@/i18n";
 import type { ProjectListItem } from "@/lib/projects.functions";
 import { cn } from "@/utils/cn";
 import { relativeTime } from "@/utils/datetime";
@@ -39,12 +40,12 @@ export default function ProjectCard({
         ? CircleIcon
         : CircleDashedIcon;
   const statusText = completed100
-    ? "已完成"
+    ? t("Complete")
     : completed > 0
-      ? "未完成"
+      ? t("Incomplete")
       : total > 0
-        ? "未开始"
-        : "草稿";
+        ? t("Not started")
+        : t("Draft");
   const badgeVariant = completed100
     ? "success"
     : completed > 0
@@ -102,7 +103,7 @@ export default function ProjectCard({
         </div>
         <div className="mt-4 flex items-center gap-2 border-t border-content-400/15 pt-3 text-xs text-content-300">
           <BookIcon className="size-3" />
-          <span>共 {project.chapterCount} 章</span>
+          <span>{t("{0} chapters", project.chapterCount)}</span>
           <span className="text-content-300/40">·</span>
           <span suppressHydrationWarning>{relativeTime(project.createdAt)}</span>
         </div>
@@ -113,14 +114,14 @@ export default function ProjectCard({
           items={[
             {
               key: "duplicate",
-              label: "复制",
+              label: t("Duplicate"),
               icon: <CopyIcon />,
               onSelect: () => onDuplicate(project.id),
             },
             { type: "separator" },
             {
               key: "delete",
-              label: "删除",
+              label: t("Delete"),
               icon: <TrashIcon />,
               danger: true,
               onSelect: () => onDelete(project.id),
@@ -131,7 +132,7 @@ export default function ProjectCard({
             variant="ghost"
             size="sm"
             shape="circle"
-            aria-label="更多操作"
+            aria-label={t("More actions")}
             className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
           >
             <MoreHorizontalIcon />

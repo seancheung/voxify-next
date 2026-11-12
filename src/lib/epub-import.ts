@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { t } from "@/i18n";
 
 export type ImportedChapter = { name: string; content: string };
 
@@ -11,15 +12,15 @@ export async function parseEpubFile(file: File): Promise<ImportedChapter[]> {
   const zip = await JSZip.loadAsync(file);
 
   const containerFile = zip.file("META-INF/container.xml");
-  if (!containerFile) throw new Error("EPUB 缺少 META-INF/container.xml");
+  if (!containerFile) throw new Error(t("EPUB is missing META-INF/container.xml"));
   const containerXml = await containerFile.async("string");
   const containerDoc = new DOMParser().parseFromString(containerXml, "application/xml");
   const rootfile = containerDoc.querySelector("rootfile");
   const opfPath = rootfile?.getAttribute("full-path");
-  if (!opfPath) throw new Error("EPUB container.xml 没有指向 OPF 文件");
+  if (!opfPath) throw new Error(t("EPUB container.xml has no OPF reference"));
 
   const opfFile = zip.file(opfPath);
-  if (!opfFile) throw new Error(`EPUB 找不到 OPF 文件：${opfPath}`);
+  if (!opfFile) throw new Error(t("EPUB OPF file not found: {0}", opfPath));
   const opfText = await opfFile.async("string");
   const opfDoc = new DOMParser().parseFromString(opfText, "application/xml");
 
@@ -53,7 +54,7 @@ export async function parseEpubFile(file: File): Promise<ImportedChapter[]> {
       ? new DOMParser().parseFromString(html, "text/html")
       : doc;
 
-    const name = pickChapterTitle(parsed) || `章节 ${(chapters.length + 1).toString()}`;
+    const name = pickChapterTitle(parsed) || t("Chapter {0}", (chapters.length + 1).toString());
     const content = extractTextContent(parsed.querySelector("body"));
     if (content.trim() === "") continue;
     chapters.push({ name, content });

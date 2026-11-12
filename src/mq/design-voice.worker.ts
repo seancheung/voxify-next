@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { configs, ttsServices, voiceDesigns } from "@/db/schema";
+import { t } from "@/i18n";
 import { probeDurationMsFromBuffer } from "@/lib/audio-probe.server";
 import { finalizeUpload } from "@/lib/files.server";
 import { buildObjectKey, deleteObject, uploadObject } from "@/lib/storage.server";
@@ -44,8 +45,8 @@ async function loadAppConfig(): Promise<AppConfig> {
 
 async function processDesignJob(designId: number): Promise<void> {
   const [design] = await db.select().from(voiceDesigns).where(eq(voiceDesigns.id, designId));
-  if (!design) throw new Error(`voice design ${designId} 不存在`);
-  if (design.ttsServiceId == null) throw new Error("关联的 TTS 服务已被删除");
+  if (!design) throw new Error(t("Voice design {0} not found", designId));
+  if (design.ttsServiceId == null) throw new Error(t("The associated TTS service was deleted"));
 
   await db
     .update(voiceDesigns)
@@ -56,7 +57,7 @@ async function processDesignJob(designId: number): Promise<void> {
     .select()
     .from(ttsServices)
     .where(eq(ttsServices.id, design.ttsServiceId));
-  if (!service) throw new Error("TTS 服务不存在");
+  if (!service) throw new Error(t("TTS service not found"));
 
   const responseFormat = (service.settings?.responseFormat as string | undefined) || "mp3";
   const appConfig = await loadAppConfig();
@@ -84,9 +85,15 @@ async function processDesignJob(designId: number): Promise<void> {
 
   if (duration <= 0) {
     deleteObject(path).catch((err) => {
-      console.warn(`清理失败设计对象 ${path} 失败:`, err);
+      console.warn(t("Failed to clean up failed design object {0}:", path), err);
     });
-    throw new Error(`无法获取音频时长 (${buffer.length}B, ${contentType})，已放弃此次生成`);
+    throw new Error(
+      t(
+        "Could not determine audio duration ({0} bytes, {1}). Generation abandoned.",
+        buffer.length,
+        contentType,
+      ),
+    );
   }
 
   const ext = mime.getExtension(contentType) ?? "bin";

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "@/i18n";
 import type { TTSSegmentJobStates } from "@/lib/mq.functions";
 
 const EMPTY: TTSSegmentJobStates = { active: [], pending: [], failed: [] };
@@ -16,7 +17,7 @@ export function useTTSSegmentStates(enabled: boolean): TTSSegmentJobStates {
       try {
         setStates(JSON.parse(e.data) as TTSSegmentJobStates);
       } catch (err) {
-        console.error("解析 segment states SSE 失败:", err);
+        console.error(t("Failed to parse segment state event:"), err);
       }
     };
     return () => {

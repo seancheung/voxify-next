@@ -4,6 +4,7 @@ import { CheckIcon, XIcon } from "lucide-react";
 import SectionCard from "@/components/settings/section-card";
 import Alert from "@/components/ui/alert";
 import Badge from "@/components/ui/badge";
+import { t } from "@/i18n";
 import { type FFToolInfo, getSystemInfo, type RequiredEncoder } from "@/lib/system.functions";
 import { cn } from "@/utils/cn";
 
@@ -15,19 +16,24 @@ export default function GeneralSystemSection() {
   });
 
   return (
-    <SectionCard title="系统依赖" description="导出 / 转码功能依赖系统中的 ffmpeg 与 ffprobe">
+    <SectionCard
+      title={t("System dependencies")}
+      description={t("Export and transcoding use ffmpeg and ffprobe")}
+    >
       {isLoading || !system ? (
-        <div className="text-sm text-content-300">检测中…</div>
+        <div className="text-sm text-content-300">{t("Checking…")}</div>
       ) : (
         <div className="flex flex-col gap-4">
           {!system.ffmpeg.installed && (
-            <Alert variant="warning" title="未检测到 ffmpeg">
-              请安装 ffmpeg 并确保命令行可执行；否则音频导出与转码功能不可用。
+            <Alert variant="warning" title={t("ffmpeg not found")}>
+              {t(
+                "Install ffmpeg and make it available on PATH to enable audio export and transcoding.",
+              )}
             </Alert>
           )}
           {!system.ffprobe.installed && (
-            <Alert variant="warning" title="未检测到 ffprobe">
-              请安装 ffprobe 以便解析音频时长 / 元数据。
+            <Alert variant="warning" title={t("ffprobe not found")}>
+              {t("Install ffprobe to read audio durations and metadata.")}
             </Alert>
           )}
           <div className="grid gap-3 md:grid-cols-2">
@@ -55,16 +61,16 @@ function ToolCard({
         <span className="text-lg text-content-100">{name}</span>
         <Badge size="sm" rounded variant={info.installed ? "success" : "error"}>
           {info.installed ? <CheckIcon /> : <XIcon />}
-          {info.installed ? "可用" : "未安装"}
+          {info.installed ? t("Available") : t("Not installed")}
         </Badge>
       </div>
       <dl className="mt-3 space-y-1.5 text-xs">
-        <Row label="路径" value={info.path ?? "—"} mono />
-        <Row label="版本" value={info.version ?? "—"} mono />
+        <Row label={t("Path")} value={info.path ?? "—"} mono />
+        <Row label={t("Version")} value={info.version ?? "—"} mono />
       </dl>
       {showEncoders && (
         <div className="mt-3 border-t border-content-400/15 pt-3">
-          <div className="mb-1.5 text-xs text-content-300">音频编码器</div>
+          <div className="mb-1.5 text-xs text-content-300">{t("Audio encoders")}</div>
           <div className="flex flex-wrap gap-1.5">
             {(Object.keys(info.encoders) as RequiredEncoder[]).map((enc) => (
               <EncoderBadge key={enc} name={enc} ok={info.encoders[enc]} />

@@ -3,6 +3,7 @@ import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { chapters, narrators, segments } from "@/db/schema";
+import { t } from "@/i18n";
 import type { CustomArgs, VoiceSettings } from "@/types/tts";
 
 export type NarratorListItem = {
@@ -101,7 +102,11 @@ const voiceSettingsSchema = z
 
 export const createNarratorSchema = z.object({
   projectId: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入角色名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a character name") })
+    .max(120),
   voiceId: z.number().int().positive().nullable(),
   voiceSettings: voiceSettingsSchema,
 });
@@ -113,7 +118,7 @@ export const createNarrator = createServerFn({ method: "POST" })
       .select({ id: narrators.id })
       .from(narrators)
       .where(and(eq(narrators.projectId, data.projectId), eq(narrators.name, data.name)));
-    if (dup) throw new Error("已存在同名角色");
+    if (dup) throw new Error(t("A character with this name already exists"));
     const now = new Date();
     const [created] = await db
       .insert(narrators)
@@ -131,7 +136,11 @@ export const createNarrator = createServerFn({ method: "POST" })
 
 export const updateNarratorSchema = z.object({
   id: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入角色名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a character name") })
+    .max(120),
   voiceId: z.number().int().positive().nullable(),
   voiceSettings: voiceSettingsSchema,
 });
@@ -143,7 +152,7 @@ export const updateNarrator = createServerFn({ method: "POST" })
       .select({ projectId: narrators.projectId })
       .from(narrators)
       .where(eq(narrators.id, data.id));
-    if (!current) throw new Error("角色不存在");
+    if (!current) throw new Error(t("Character not found"));
     const [dup] = await db
       .select({ id: narrators.id })
       .from(narrators)
@@ -154,7 +163,7 @@ export const updateNarrator = createServerFn({ method: "POST" })
           ne(narrators.id, data.id),
         ),
       );
-    if (dup) throw new Error("已存在同名角色");
+    if (dup) throw new Error(t("A character with this name already exists"));
     await db
       .update(narrators)
       .set({

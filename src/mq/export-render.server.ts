@@ -8,6 +8,7 @@ import { PassThrough, Readable } from "node:stream";
 import { aliasedTable, and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { chapters, files, projectExports, projects, segments, ttsGenerations } from "@/db/schema";
+import { t } from "@/i18n";
 import { finalizeUpload } from "@/lib/files.server";
 import { buildObjectKey, deleteObject, storageFile, uploadStream } from "@/lib/storage.server";
 import type { ExportFormat, ExportSettingsSnapshot, SubtitleFormat } from "@/types/export";
@@ -18,7 +19,7 @@ const FFPROBE_BIN = process.env.FFPROBE_PATH ?? "ffprobe";
 
 class CancelledError extends Error {
   constructor() {
-    super("已取消");
+    super(t("Canceled"));
     this.name = "ExportCancelledError";
   }
 }
@@ -72,7 +73,7 @@ export async function renderExport(
     .select()
     .from(projects)
     .where(and(eq(projects.id, data.projectId), isNull(projects.deletedAt)));
-  if (!project) throw new Error("项目不存在");
+  if (!project) throw new Error(t("Project not found"));
 
   const allChapters = await db
     .select()
@@ -84,7 +85,7 @@ export async function renderExport(
     data.scope === "chapter" && data.chapterId != null
       ? allChapters.filter((c) => c.id === data.chapterId)
       : allChapters;
-  if (targetChapters.length === 0) throw new Error("没有可导出的章节");
+  if (targetChapters.length === 0) throw new Error(t("No chapters to export"));
 
   const tmpRoot = await mkdtemp(join(tmpdir(), "voxify-export-"));
   const chaptersDir = join(tmpRoot, "chapters");
@@ -108,7 +109,7 @@ export async function renderExport(
         subtitles: subs,
       });
     }
-    if (chapterRenders.length === 0) throw new Error("没有可导出的片段");
+    if (chapterRenders.length === 0) throw new Error(t("No segments to export"));
 
     const ext = formatToExt(data.format);
     const baseName = sanitizeFileName(project.name) || "export";
@@ -289,7 +290,7 @@ export async function renderExport(
 
       const zipResp = downloadZip(zipEntries());
       const zipWebBody = zipResp.body;
-      if (!zipWebBody) throw new Error("zip body 不可读");
+      if (!zipWebBody) throw new Error(t("ZIP body is unreadable"));
       const zipNodeBody = Readable.fromWeb(
         zipWebBody as unknown as import("node:stream/web").ReadableStream<Uint8Array>,
       );
@@ -420,7 +421,7 @@ async function concatChapterWavs(
   outputWav: string,
   signal: AbortSignal,
 ): Promise<void> {
-  if (inputs.length === 0) throw new Error("无章节可拼接");
+  if (inputs.length === 0) throw new Error(t("No chapters to concatenate"));
   if (inputs.length === 1 && gapMs === 0) {
     await runFFmpeg(["-y", "-i", inputs[0], "-c:a", "pcm_s16le", outputWav], signal);
     return;
@@ -595,7 +596,7 @@ function spawnFfmpegToStdout(
     stderr = appendStderrTail(stderr, c.toString());
   });
   const stdout = proc.stdout;
-  if (!stdout) throw new Error("ffmpeg stdout 不可用");
+  if (!stdout) throw new Error(t("ffmpeg stdout unavailable"));
 
   const kill = () => {
     if (proc.exitCode !== null) return;

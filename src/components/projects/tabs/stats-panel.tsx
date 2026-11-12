@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import SectionCard from "@/components/settings/section-card";
 import Skeleton from "@/components/ui/skeleton";
+import { t } from "@/i18n";
 import { getProjectStats, type ProjectStats } from "@/lib/projects.functions";
 import { cn } from "@/utils/cn";
 
@@ -27,7 +28,10 @@ export default function StatsPanel({ projectId }: { projectId: number }) {
 function StatsPanelSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pb-6">
-      <SectionCard title="项目概览" description="统计当前项目的资产与生成状态">
+      <SectionCard
+        title={t("Project overview")}
+        description={t("Project assets and generation status")}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
             <StatCardSkeleton key={i} />
@@ -51,60 +55,88 @@ function StatCardSkeleton() {
 
 function StatsSection({ stats }: { stats: ProjectStats }) {
   return (
-    <SectionCard title="项目概览" description="统计当前项目的资产与生成状态">
+    <SectionCard
+      title={t("Project overview")}
+      description={t("Project assets and generation status")}
+    >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="章节">
-          <StatValue value={stats.chapterCount} suffix="个" />
+        <StatCard label={t("Chapter")}>
+          <StatValue value={stats.chapterCount} suffix={t("items total")} />
         </StatCard>
-        <StatCard label="段落">
-          <StatValue value={stats.segments.total} suffix="个" />
+        <StatCard label={t("Segments")}>
+          <StatValue value={stats.segments.total} suffix={t("items total")} />
           <StatLines>
-            <StatLine label="已生成" value={`${stats.segments.generated} 个`} />
+            <StatLine label={t("Generated")} value={t("{0} items", stats.segments.generated)} />
             {stats.segments.ungenerated > 0 && (
-              <StatLine label="未生成" value={`${stats.segments.ungenerated} 个`} tone="warning" />
-            )}
-          </StatLines>
-        </StatCard>
-        <StatCard label="角色">
-          <StatValue value={stats.narrators.total} suffix="个" />
-          <StatLines>
-            <StatLine label="使用中" value={`${stats.narrators.used} 个`} />
-            {stats.narrators.unused > 0 && (
-              <StatLine label="未使用" value={`${stats.narrators.unused} 个`} tone="muted" />
-            )}
-          </StatLines>
-        </StatCard>
-        <StatCard label="语音合成">
-          <StatValue value={stats.ttsGenerations.total} suffix="条" />
-          <StatLines>
-            <StatLine
-              label="使用中"
-              value={`${stats.ttsGenerations.used.count} 条 · ${formatBytes(stats.ttsGenerations.used.size)} · ${formatDuration(stats.ttsGenerations.used.duration)}`}
-            />
-            {stats.ttsGenerations.candidate.count > 0 && (
               <StatLine
-                label="候选"
-                value={`${stats.ttsGenerations.candidate.count} 条 · ${formatBytes(stats.ttsGenerations.candidate.size)}`}
-                tone="muted"
-              />
-            )}
-            {stats.ttsGenerations.orphan.count > 0 && (
-              <StatLine
-                label="无主"
-                value={`${stats.ttsGenerations.orphan.count} 条 · ${formatBytes(stats.ttsGenerations.orphan.size)}`}
+                label={t("Not generated")}
+                value={t("{0} items", stats.segments.ungenerated)}
                 tone="warning"
               />
             )}
           </StatLines>
         </StatCard>
-        <StatCard label="导出">
-          <StatValue value={stats.exports.count} suffix="个" />
+        <StatCard label={t("Character")}>
+          <StatValue value={stats.narrators.total} suffix={t("items total")} />
           <StatLines>
-            <StatLine label="总体积" value={formatBytes(stats.exports.size)} />
+            <StatLine label={t("In use")} value={t("{0} items", stats.narrators.used)} />
+            {stats.narrators.unused > 0 && (
+              <StatLine
+                label={t("Unused")}
+                value={t("{0} items", stats.narrators.unused)}
+                tone="muted"
+              />
+            )}
+          </StatLines>
+        </StatCard>
+        <StatCard label={t("Speech synthesis")}>
+          <StatValue value={stats.ttsGenerations.total} suffix={t("entries")} />
+          <StatLines>
+            <StatLine
+              label={t("In use")}
+              value={t(
+                "{0} entries · {1} · {2}",
+                stats.ttsGenerations.used.count,
+                formatBytes(stats.ttsGenerations.used.size),
+                formatDuration(stats.ttsGenerations.used.duration),
+              )}
+            />
+            {stats.ttsGenerations.candidate.count > 0 && (
+              <StatLine
+                label={t("Alternate")}
+                value={t(
+                  "{0} entries · {1}",
+                  stats.ttsGenerations.candidate.count,
+                  formatBytes(stats.ttsGenerations.candidate.size),
+                )}
+                tone="muted"
+              />
+            )}
+            {stats.ttsGenerations.orphan.count > 0 && (
+              <StatLine
+                label={t("Orphaned")}
+                value={t(
+                  "{0} entries · {1}",
+                  stats.ttsGenerations.orphan.count,
+                  formatBytes(stats.ttsGenerations.orphan.size),
+                )}
+                tone="warning"
+              />
+            )}
+          </StatLines>
+        </StatCard>
+        <StatCard label={t("Exports")}>
+          <StatValue value={stats.exports.count} suffix={t("items total")} />
+          <StatLines>
+            <StatLine label={t("Total size")} value={formatBytes(stats.exports.size)} />
             {stats.exports.outdated.count > 0 && (
               <StatLine
-                label="过时"
-                value={`${stats.exports.outdated.count} 个 · ${formatBytes(stats.exports.outdated.size)}`}
+                label={t("Outdated")}
+                value={t(
+                  "{0} items · {1}",
+                  stats.exports.outdated.count,
+                  formatBytes(stats.exports.outdated.size),
+                )}
                 tone="muted"
               />
             )}

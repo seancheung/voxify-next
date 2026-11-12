@@ -22,6 +22,7 @@ import VoiceDesignsEmptyState from "@/components/voices/voice-designs-empty-stat
 import VoiceDesignsHeaderRow from "@/components/voices/voice-designs-header-row";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreviewPlayer } from "@/hooks/use-preview-player";
+import { t } from "@/i18n";
 import {
   deleteVoiceDesign,
   getVoiceDesignDownloadInfo,
@@ -108,11 +109,11 @@ export default function VoiceDesignsTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["voice-designs"] });
       setConfirmingDelete(null);
-      toast.success("已删除");
+      toast.success(t("Deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -123,7 +124,7 @@ export default function VoiceDesignsTab() {
         data: { id: design.id },
       });
       const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`下载音频失败 (${resp.status})`);
+      if (!resp.ok) throw new Error(t("Audio download failed ({0})", resp.status));
       const { downloadZip } = await import("client-zip");
       const blob = await downloadZip([
         { name: audioFileName, input: resp },
@@ -139,7 +140,7 @@ export default function VoiceDesignsTab() {
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (err) {
       toast.error({
-        title: "下载失败",
+        title: t("Download failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -165,7 +166,7 @@ export default function VoiceDesignsTab() {
       <div className="mb-4 flex items-center justify-end">
         <Button onClick={openCreate}>
           <SparklesIcon />
-          设计声音
+          {t("Design voice")}
         </Button>
       </div>
       {showSkeleton ? (
@@ -211,10 +212,10 @@ export default function VoiceDesignsTab() {
           </Table>
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           {isFetchingNextPage && (
-            <div className="py-6 text-center text-xs text-content-400">加载中…</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("Loading…")}</div>
           )}
           {!hasNextPage && items.length >= PAGE_SIZE && (
-            <div className="py-6 text-center text-xs text-content-400">已经到底了</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("End of list")}</div>
           )}
         </>
       )}
@@ -243,9 +244,9 @@ export default function VoiceDesignsTab() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除"
+        title={t("Confirm deletion")}
         description={
-          confirmingDelete ? `“${confirmingDelete.name}” 将被删除，操作不可撤销。` : undefined
+          confirmingDelete ? t("Permanently delete “{0}”?", confirmingDelete.name) : undefined
         }
         size="sm"
         footer={
@@ -255,7 +256,7 @@ export default function VoiceDesignsTab() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -264,7 +265,7 @@ export default function VoiceDesignsTab() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }

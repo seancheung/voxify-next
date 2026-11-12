@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import { listNarrators } from "@/lib/narrators.functions";
 import {
   type SegmentListItem,
@@ -67,7 +68,7 @@ export default function SegmentEditDialog({
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -129,16 +130,16 @@ export default function SegmentEditDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="编辑段落"
-      description="保存后段落会被标记为有更新，需要重新生成音频"
+      title={t("Edit segment")}
+      description={t("Saving marks the segment as updated. Regenerate its audio to apply changes.")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : "保存"}
+            {submitting ? t("Saving…") : t("Save")}
           </Button>
         </>
       }
@@ -147,18 +148,18 @@ export default function SegmentEditDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="content">
             {(field) => (
-              <field.FormField label="文本">
+              <field.FormField label={t("Text")}>
                 <field.TextareaField rows={6} className="w-full" />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="narratorId">
             {(field) => (
-              <field.FormField label="角色">
+              <field.FormField label={t("Character")}>
                 <field.SelectField<number>
                   options={narratorOptions}
                   className="w-full"
-                  placeholder="默认（无角色）"
+                  placeholder={t("Default (no character)")}
                   clearable
                 />
               </field.FormField>
@@ -167,15 +168,21 @@ export default function SegmentEditDialog({
           <div className="grid grid-cols-2 gap-4">
             <form.AppField name="speed">
               {(field) => (
-                <field.FormField label="语速" description="覆盖默认语速，例如 1.0、1.25">
-                  <field.InputField placeholder="留空使用默认" />
+                <field.FormField
+                  label={t("Speed")}
+                  description={t("Override the default speed, e.g. 1.0 or 1.25")}
+                >
+                  <field.InputField placeholder={t("Leave blank to use the default")} />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="instructions">
               {(field) => (
-                <field.FormField label="指令" description="部分服务支持的语气/情感描述">
-                  <field.InputField placeholder="留空使用默认" />
+                <field.FormField
+                  label={t("Instructions")}
+                  description={t("Tone or emotion instructions for supported services")}
+                >
+                  <field.InputField placeholder={t("Leave blank to use the default")} />
                 </field.FormField>
               )}
             </form.AppField>
@@ -183,13 +190,16 @@ export default function SegmentEditDialog({
           <div className="grid grid-cols-2 gap-4">
             <form.AppField name="leadingSilence">
               {(field) => (
-                <field.FormField label="前置留白 (ms)" description="留空使用默认值">
+                <field.FormField
+                  label={t("Leading silence (ms)")}
+                  description={t("Leave blank for default")}
+                >
                   <field.NumberField
                     integer
                     clearable
                     min={0}
                     max={600_000}
-                    placeholder="默认"
+                    placeholder={t("Default")}
                     className="w-full"
                   />
                 </field.FormField>
@@ -197,13 +207,16 @@ export default function SegmentEditDialog({
             </form.AppField>
             <form.AppField name="trailingSilence">
               {(field) => (
-                <field.FormField label="后置留白 (ms)" description="留空使用默认值">
+                <field.FormField
+                  label={t("Trailing silence (ms)")}
+                  description={t("Leave blank for default")}
+                >
                   <field.NumberField
                     integer
                     clearable
                     min={0}
                     max={600_000}
-                    placeholder="默认"
+                    placeholder={t("Default")}
                     className="w-full"
                   />
                 </field.FormField>

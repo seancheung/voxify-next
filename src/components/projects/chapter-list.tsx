@@ -7,6 +7,7 @@ import ChapterDialog from "@/components/projects/chapter-dialog";
 import ChapterListItem from "@/components/projects/chapter-list-item";
 import Button from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   type ChapterListItem as ChapterRow,
   deleteChapter,
@@ -47,7 +48,7 @@ export default function ChapterList({
     onError: (err) => {
       qc.invalidateQueries({ queryKey: ["chapters", projectId] });
       toast.error({
-        title: "排序失败",
+        title: t("Reordering failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     },
@@ -61,7 +62,7 @@ export default function ChapterList({
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -72,17 +73,17 @@ export default function ChapterList({
       qc.invalidateQueries({ queryKey: ["chapters", projectId] });
       qc.invalidateQueries({ queryKey: ["deleted-chapters", projectId] });
       toast.success({
-        title: "章节已删除",
+        title: t("Chapter deleted"),
         duration: 8000,
         action: {
-          label: "撤销",
+          label: t("Undo"),
           onClick: () => restoreMut.mutate(id),
         },
       });
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -94,7 +95,7 @@ export default function ChapterList({
     },
     onError: (err) =>
       toast.error({
-        title: "复制失败",
+        title: t("Duplication failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -111,12 +112,14 @@ export default function ChapterList({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-content-400/15 px-3">
-        <h2 className="text-xs font-normal text-content-300">章节 · {chapters.length}</h2>
+        <h2 className="text-xs font-normal text-content-300">
+          {t("Chapters ·")} {chapters.length}
+        </h2>
         <Button
           variant="ghost"
           size="sm"
           shape="square"
-          aria-label="新建章节"
+          aria-label={t("New chapter")}
           onClick={() => setCreating(true)}
         >
           <PlusIcon />
@@ -125,10 +128,10 @@ export default function ChapterList({
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         {order.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-4 py-10 text-center text-xs text-content-400">
-            <p>还没有章节</p>
+            <p>{t("No chapters yet")}</p>
             <Button size="sm" onClick={() => setCreating(true)}>
               <PlusIcon />
-              新建章节
+              {t("New chapter")}
             </Button>
           </div>
         ) : (

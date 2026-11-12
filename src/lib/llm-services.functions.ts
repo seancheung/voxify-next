@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { llmServices } from "@/db/schema";
+import { t } from "@/i18n";
 import { type LLMSettings, LLMType } from "@/types/llm";
 
 export interface LLMServiceListItem {
@@ -62,7 +63,11 @@ function normalizeSettings(input: z.output<typeof settingsSchema>): LLMSettings 
 }
 
 const baseFields = {
-  name: z.string().trim().min(1, "请输入名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a name") })
+    .max(120),
   type: z.union([
     z.literal(LLMType.OpenAI),
     z.literal(LLMType.Anthropic),
@@ -70,7 +75,11 @@ const baseFields = {
     z.literal(LLMType.Ollama),
     z.literal(LLMType.DeepSeek),
   ]),
-  baseUrl: z.string().trim().min(1, "请输入 Base URL").url("URL 格式不正确"),
+  baseUrl: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a base URL") })
+    .url({ error: () => t("Invalid URL") }),
   apiKey: z.string().trim().nullable(),
   settings: settingsSchema,
 };
@@ -125,7 +134,7 @@ export const updateLLMService = createServerFn({ method: "POST" })
       .set(updates)
       .where(eq(llmServices.id, data.id))
       .returning(listColumns);
-    if (!updated) throw new Error("LLM 服务不存在");
+    if (!updated) throw new Error(t("LLM service not found"));
     return updated;
   });
 
@@ -307,7 +316,7 @@ export async function fetchRemoteLLMModels(
     case LLMType.Ollama:
       return fetchOllamaModels(baseUrl);
     default:
-      throw new Error("当前服务类型不支持模型同步");
+      throw new Error(t("This service does not support model sync"));
   }
 }
 

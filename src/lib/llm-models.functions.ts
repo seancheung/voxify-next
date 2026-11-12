@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { llmModels, llmServices } from "@/db/schema";
+import { t } from "@/i18n";
 import type { LLMModelMetadata, LLMType } from "@/types/llm";
 import { fetchRemoteLLMModels } from "./llm-services.functions";
 
@@ -48,8 +49,16 @@ const idSchema = z.object({ id: z.number().int().positive() });
 
 const baseFields = {
   llmServiceId: z.number().int().positive(),
-  key: z.string().trim().min(1, "请输入模型 ID").max(200),
-  name: z.string().trim().min(1, "请输入显示名").max(200),
+  key: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a model ID") })
+    .max(200),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a display name") })
+    .max(200),
   description: z.string().trim().max(500).nullable().optional(),
 };
 
@@ -86,7 +95,7 @@ export const createLLMModel = createServerFn({ method: "POST" })
       .from(llmModels)
       .innerJoin(llmServices, eq(llmModels.llmServiceId, llmServices.id))
       .where(eq(llmModels.id, created.id));
-    if (!row) throw new Error("创建失败");
+    if (!row) throw new Error(t("Creation failed"));
     return row;
   });
 
@@ -108,7 +117,7 @@ export const updateLLMModel = createServerFn({ method: "POST" })
       .from(llmModels)
       .innerJoin(llmServices, eq(llmModels.llmServiceId, llmServices.id))
       .where(eq(llmModels.id, data.id));
-    if (!row) throw new Error("模型不存在");
+    if (!row) throw new Error(t("Model not found"));
     return row;
   });
 
@@ -141,7 +150,7 @@ export const syncLLMModels = createServerFn({ method: "POST" })
       total: number;
     }> => {
       const [svc] = await db.select().from(llmServices).where(eq(llmServices.id, data.id));
-      if (!svc) throw new Error("LLM 服务不存在");
+      if (!svc) throw new Error(t("LLM service not found"));
 
       const remote = await fetchRemoteLLMModels(svc.type, svc.baseUrl, svc.apiKey);
       const existing = await db.select().from(llmModels).where(eq(llmModels.llmServiceId, svc.id));

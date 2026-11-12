@@ -21,6 +21,7 @@ import Tooltip from "@/components/ui/tooltip";
 import { useDebouncedState } from "@/hooks/use-debounced";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreviewPlayer } from "@/hooks/use-preview-player";
+import { t } from "@/i18n";
 import { listTTSServices } from "@/lib/tts-services.functions";
 import { type ListVoicesResult, listVoices, type VoiceListItem } from "@/lib/voices.functions";
 import { cn } from "@/utils/cn";
@@ -30,8 +31,18 @@ const ALL_SERVICES = 0;
 type SortKey = "createdAt" | "name";
 
 const SORT_OPTIONS: SelectOption<SortKey>[] = [
-  { value: "createdAt", label: "添加时间" },
-  { value: "name", label: "名称" },
+  {
+    value: "createdAt",
+    get label() {
+      return t("Added at");
+    },
+  },
+  {
+    value: "name",
+    get label() {
+      return t("Name");
+    },
+  },
 ];
 
 export type VoicePickerDialogProps = {
@@ -48,8 +59,8 @@ export default function VoicePickerDialog({
   onOpenChange,
   value,
   onChange,
-  title = "选择声音",
-  description = "仅显示已启用的声音",
+  title = t("Choose voice"),
+  description = t("Only enabled voices are shown"),
 }: VoicePickerDialogProps) {
   const list = useServerFn(listVoices);
   const fetchServices = useServerFn(listTTSServices);
@@ -77,7 +88,7 @@ export default function VoicePickerDialog({
   });
 
   const serviceOptions: SelectOption<number>[] = [
-    { value: ALL_SERVICES, label: "全部服务" },
+    { value: ALL_SERVICES, label: t("All services") },
     ...services.map((s) => ({ value: s.id, label: s.name })),
   ];
 
@@ -150,10 +161,10 @@ export default function VoicePickerDialog({
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={!pendingId} onClick={handleConfirm}>
-            确认
+            {t("Confirm")}
           </Button>
         </>
       }
@@ -168,7 +179,7 @@ export default function VoicePickerDialog({
           />
           <Input
             type="search"
-            placeholder="搜索名称、标签…"
+            placeholder={t("Search names or tags…")}
             value={query}
             onChange={setQuery}
             icon={<SearchIcon />}
@@ -187,7 +198,7 @@ export default function VoicePickerDialog({
             <VoiceTableSkeleton />
           ) : voices.length === 0 ? (
             <div className="flex h-72 items-center justify-center text-sm text-content-400">
-              {isFiltered ? "没有匹配的声音" : "暂无可选声音"}
+              {isFiltered ? t("No matching voices") : t("No voices available")}
             </div>
           ) : (
             <RadioGroup<number | null>
@@ -198,11 +209,11 @@ export default function VoicePickerDialog({
               <Table className="[&_td]:px-3 [&_td]:py-1.5 [&_th]:h-8 [&_th]:px-3">
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="w-8" aria-label="选择" />
-                    <TableHead>名称</TableHead>
-                    <TableHead>服务</TableHead>
-                    <TableHead>标签</TableHead>
-                    <TableHead className="w-10 text-right">试听</TableHead>
+                    <TableHead className="w-8" aria-label={t("Select")} />
+                    <TableHead>{t("Name")}</TableHead>
+                    <TableHead>{t("Service")}</TableHead>
+                    <TableHead>{t("Tags")}</TableHead>
+                    <TableHead className="w-10 text-right">{t("Preview")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -225,10 +236,10 @@ export default function VoicePickerDialog({
           )}
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           {isFetchingNextPage && (
-            <div className="py-4 text-center text-xs text-content-400">加载中…</div>
+            <div className="py-4 text-center text-xs text-content-400">{t("Loading…")}</div>
           )}
           {!hasNextPage && !isFetching && !showSkeleton && voices.length >= PAGE_SIZE && (
-            <div className="py-4 text-center text-xs text-content-400">已经到底了</div>
+            <div className="py-4 text-center text-xs text-content-400">{t("End of list")}</div>
           )}
         </div>
       </div>
@@ -283,7 +294,7 @@ function VoiceRow({
       <TableCell className="w-10 text-right">
         <button
           type="button"
-          aria-label={isPlaying ? "停止" : "试听"}
+          aria-label={isPlaying ? t("Stop") : t("Preview")}
           disabled={!voice.previewUrl || isLoadingAudio}
           onClick={(e) => {
             e.stopPropagation();
@@ -313,11 +324,11 @@ function VoiceTableSkeleton() {
     <Table className="[&_td]:px-3 [&_td]:py-1.5 [&_th]:h-8 [&_th]:px-3">
       <TableHeader>
         <TableRow>
-          <TableHead className="w-8" aria-label="选择" />
-          <TableHead>名称</TableHead>
-          <TableHead>服务</TableHead>
-          <TableHead>标签</TableHead>
-          <TableHead className="w-10 text-right">试听</TableHead>
+          <TableHead className="w-8" aria-label={t("Select")} />
+          <TableHead>{t("Name")}</TableHead>
+          <TableHead>{t("Service")}</TableHead>
+          <TableHead>{t("Tags")}</TableHead>
+          <TableHead className="w-10 text-right">{t("Preview")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "@/i18n";
 import type { ExportJobInfo, ExportJobsSnapshot } from "@/lib/export.functions";
 import type { JobsCounts } from "@/lib/mq.functions";
 
@@ -29,7 +30,7 @@ export function useExportJobsStream(enabled: boolean): {
         setCounts(parsed.counts);
         setLoading(false);
       } catch (err) {
-        console.error("解析 SSE 消息失败:", err);
+        console.error(t("Failed to parse SSE message:"), err);
       }
     };
     es.onerror = () => {

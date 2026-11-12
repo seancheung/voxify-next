@@ -6,14 +6,29 @@ import { useAppForm } from "@/components/form";
 import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
+import { t } from "@/i18n";
 import { getProject } from "@/lib/chapters.functions";
 import { getAppConfig } from "@/lib/configs.functions";
 import { listLLMModels } from "@/lib/llm-models.functions";
 import { listPrompts } from "@/lib/prompts.functions";
 
 const schema = z.object({
-  llmModelId: z.number({ error: "请选择 LLM 模型" }).int().positive("请选择 LLM 模型"),
-  promptId: z.number({ error: "请选择提示词" }).int().positive("请选择提示词"),
+  llmModelId: z
+    .number({
+      get error() {
+        return t("Select an LLM model");
+      },
+    })
+    .int()
+    .positive(t("Select an LLM model")),
+  promptId: z
+    .number({
+      get error() {
+        return t("Select a prompt");
+      },
+    })
+    .int()
+    .positive(t("Select a prompt")),
 });
 
 type SmartFormatPayload = z.infer<typeof schema>;
@@ -101,15 +116,17 @@ export default function SmartFormatDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="智能格式化"
-      description="使用 LLM 按提示词重排脚本，结果会流式覆盖到编辑器"
+      title={t("Smart format")}
+      description={t(
+        "Use an LLM and prompt to reformat the script. Results stream into the editor.",
+      )}
       size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            取消
+            {t("Cancel")}
           </Button>
-          <Button onClick={() => form.handleSubmit()}>开始处理</Button>
+          <Button onClick={() => form.handleSubmit()}>{t("Start processing")}</Button>
         </>
       }
     >
@@ -118,22 +135,22 @@ export default function SmartFormatDialog({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <form.AppField name="llmModelId">
               {(field) => (
-                <field.FormField label="LLM 模型">
+                <field.FormField label={t("LLM model")}>
                   <field.ComboboxField<number>
                     options={llmOptions}
                     className="w-full"
-                    placeholder="请选择…"
+                    placeholder={t("Select…")}
                   />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="promptId">
               {(field) => (
-                <field.FormField label="提示词">
+                <field.FormField label={t("Prompt")}>
                   <field.SelectField<number>
                     options={promptOptions}
                     className="w-full"
-                    placeholder="请选择…"
+                    placeholder={t("Select…")}
                   />
                 </field.FormField>
               )}
@@ -158,7 +175,7 @@ function PromptPreview({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-sm">提示词预览</div>
+      <div className="text-sm">{t("Prompt preview")}</div>
       {prompt ? (
         <div className="flex max-h-72 flex-col gap-2 overflow-hidden rounded-md border border-content-400/20 bg-base-200 p-3">
           {prompt.description ? (
@@ -170,7 +187,7 @@ function PromptPreview({
         </div>
       ) : (
         <div className="rounded-md border border-content-400/20 bg-base-200 p-6 text-center text-sm text-content-400">
-          选择提示词后这里会显示完整内容
+          {t("Select a prompt to preview its full text")}
         </div>
       )}
     </div>

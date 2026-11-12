@@ -20,6 +20,7 @@ import ProjectsToolbar, {
 import Button from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { useDebouncedState } from "@/hooks/use-debounced";
+import { t } from "@/i18n";
 import {
   deleteProject,
   duplicateProject,
@@ -121,7 +122,7 @@ function RouteComponent() {
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -131,17 +132,17 @@ function RouteComponent() {
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success({
-        title: "项目已删除",
+        title: t("Project deleted"),
         duration: 8000,
         action: {
-          label: "撤销",
+          label: t("Undo"),
           onClick: () => restoreMut.mutate(id),
         },
       });
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -150,11 +151,11 @@ function RouteComponent() {
     mutationFn: (id: number) => dup({ data: { id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("已复制项目");
+      toast.success(t("Project duplicated"));
     },
     onError: (err) =>
       toast.error({
-        title: "复制失败",
+        title: t("Duplication failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -162,19 +163,21 @@ function RouteComponent() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <PageHeader
-        title="项目"
+        title={t("Project")}
         description={
-          hasNextPage ? `已加载 ${loadedCount} 个，下滑加载更多` : `共 ${loadedCount} 个项目`
+          hasNextPage
+            ? t("Loaded {0} voices. Scroll for more.", loadedCount)
+            : t("{0} projects", loadedCount)
         }
         actions={
           <>
             <Button variant="secondary" onClick={() => setImporting(true)}>
               <FileUpIcon />
-              导入内容
+              {t("Import content")}
             </Button>
             <Button onClick={() => setCreating(true)}>
               <PlusIcon />
-              新建项目
+              {t("New project")}
             </Button>
           </>
         }
@@ -203,10 +206,10 @@ function RouteComponent() {
           </div>
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           {isFetchingNextPage && (
-            <div className="py-6 text-center text-xs text-content-400">加载中…</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("Loading…")}</div>
           )}
           {!hasNextPage && projects.length >= PAGE_SIZE && (
-            <div className="py-6 text-center text-xs text-content-400">已经到底了</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("End of list")}</div>
           )}
         </>
       )}

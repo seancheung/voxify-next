@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { LLMType } from "@/types/llm";
 
 export interface LLMServiceForStream {
@@ -36,7 +37,7 @@ export async function streamLLMText(params: StreamLLMTextParams): Promise<void> 
     case LLMType.GoogleGenerativeAI:
       return streamGoogle(params);
     default:
-      throw new Error("未知的 LLM 服务类型");
+      throw new Error(t("Unknown LLM service type"));
   }
 }
 

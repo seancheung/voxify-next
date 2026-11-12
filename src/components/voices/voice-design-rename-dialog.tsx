@@ -5,6 +5,7 @@ import { useAppForm } from "@/components/form";
 import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   renameVoiceDesign,
   renameVoiceDesignSchema,
@@ -31,7 +32,7 @@ export default function VoiceDesignRenameDialog({
     },
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -58,15 +59,15 @@ export default function VoiceDesignRenameDialog({
       onOpenChange={(next) => {
         if (!submitting) onOpenChange(next);
       }}
-      title="重命名"
+      title={t("Rename")}
       size="sm"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : "保存"}
+            {submitting ? t("Saving…") : t("Save")}
           </Button>
         </>
       }
@@ -75,7 +76,7 @@ export default function VoiceDesignRenameDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
+              <field.FormField label={t("Name")}>
                 <field.InputField autoFocus />
               </field.FormField>
             )}

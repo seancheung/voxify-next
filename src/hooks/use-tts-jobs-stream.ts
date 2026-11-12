@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "@/i18n";
 import type { JobsCounts, TTSJobInfo, TTSJobsSnapshot } from "@/lib/mq.functions";
 
 const EMPTY_COUNTS: JobsCounts = {
@@ -28,7 +29,7 @@ export function useTTSJobsStream(enabled: boolean): {
         setCounts(parsed.counts);
         setLoading(false);
       } catch (err) {
-        console.error("解析 SSE 消息失败:", err);
+        console.error(t("Failed to parse SSE message:"), err);
       }
     };
     es.onerror = () => {

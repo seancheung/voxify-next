@@ -2,13 +2,24 @@ import { ArrowDownUpIcon, SearchIcon } from "lucide-react";
 import Input from "@/components/ui/input";
 import Select, { type SelectOption } from "@/components/ui/select";
 import Toggle, { ToggleGroup } from "@/components/ui/toggle";
+import { t } from "@/i18n";
 
 export type VoicesSortKey = "createdAt" | "name";
 export type VoicesEnabledFilter = "all" | "enabled" | "disabled";
 
 const SORT_OPTIONS: SelectOption<VoicesSortKey>[] = [
-  { value: "createdAt", label: "添加时间" },
-  { value: "name", label: "名称" },
+  {
+    value: "createdAt",
+    get label() {
+      return t("Added at");
+    },
+  },
+  {
+    value: "name",
+    get label() {
+      return t("Name");
+    },
+  },
 ];
 
 export default function VoicesToolbar({
@@ -42,7 +53,7 @@ export default function VoicesToolbar({
       />
       <Input
         type="search"
-        placeholder="搜索名称、标签…"
+        placeholder={t("Search names or tags…")}
         value={query}
         onChange={onQueryChange}
         icon={<SearchIcon />}
@@ -54,13 +65,13 @@ export default function VoicesToolbar({
         className="mr-4 ml-auto gap-1"
       >
         <Toggle value="all" size="sm">
-          全部
+          {t("All")}
         </Toggle>
         <Toggle value="enabled" size="sm" variant="success">
-          启用
+          {t("Enable")}
         </Toggle>
         <Toggle value="disabled" size="sm" variant="error">
-          禁用
+          {t("Disable")}
         </Toggle>
       </ToggleGroup>
       <Select<VoicesSortKey>

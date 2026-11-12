@@ -18,6 +18,7 @@ import Textarea from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import Tooltip from "@/components/ui/tooltip";
 import VoiceSelect from "@/components/voice-select";
+import { t } from "@/i18n";
 import { getProject } from "@/lib/chapters.functions";
 import {
   deleteNarrator,
@@ -88,7 +89,7 @@ export default function NarratorsPanel({ projectId }: { projectId: number }) {
     },
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -98,11 +99,11 @@ export default function NarratorsPanel({ projectId }: { projectId: number }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["narrators", projectId] });
       qc.invalidateQueries({ queryKey: ["segments"] });
-      toast.success("已删除角色");
+      toast.success(t("Deleted character"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -119,21 +120,21 @@ export default function NarratorsPanel({ projectId }: { projectId: number }) {
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="text-sm text-content-300">
-          共 {narratorList.length} 个角色（跨章节共享）
+          {t("{0} characters shared across chapters", narratorList.length)}
         </div>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          新建角色
+          {t("New character")}
         </Button>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>角色名称</TableHead>
-            <TableHead className="w-72">声音</TableHead>
-            <TableHead>使用情况</TableHead>
-            <TableHead className="w-32 text-right">操作</TableHead>
+            <TableHead>{t("Character name")}</TableHead>
+            <TableHead className="w-72">{t("Voice")}</TableHead>
+            <TableHead>{t("Usage")}</TableHead>
+            <TableHead className="w-32 text-right">{t("Actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -180,17 +181,21 @@ export default function NarratorsPanel({ projectId }: { projectId: number }) {
         onOpenChange={(open) => {
           if (!open) setDeletingConfirm(null);
         }}
-        title="确认删除角色"
+        title={t("Delete character?")}
         description={
           deletingConfirm
-            ? `角色 "${deletingConfirm.name}" 已被 ${deletingConfirm.usageCount} 个段落引用，删除后这些段落将回退到默认（无角色），是否继续？`
+            ? t(
+                "Character “{0}” is used by {1} segments. Delete it and switch those segments to the default character?",
+                deletingConfirm.name,
+                deletingConfirm.usageCount,
+              )
             : undefined
         }
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeletingConfirm(null)}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -202,7 +207,7 @@ export default function NarratorsPanel({ projectId }: { projectId: number }) {
                 });
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }
@@ -248,7 +253,7 @@ function DefaultNarratorRow({
     },
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -256,25 +261,25 @@ function DefaultNarratorRow({
   return (
     <TableRow>
       <TableCell>
-        <Tooltip content="未指定角色的段落使用">
-          <span className="text-content-400">默认</span>
+        <Tooltip content={t("Used for segments without a character")}>
+          <span className="text-content-400">{t("Default")}</span>
         </Tooltip>
       </TableCell>
       <TableCell>
         <VoiceSelect
           value={voiceId}
           onChange={(id) => saveMut.mutate(id)}
-          dialogTitle="选择项目默认声音"
+          dialogTitle={t("Choose the default project voice")}
         />
       </TableCell>
       <TableCell>
         {unassignedCount > 0 ? (
           <Badge size="sm" variant="info">
-            被 {unassignedCount} 个段落引用
+            {t("Used by {0} segments", unassignedCount)}
           </Badge>
         ) : (
           <Badge size="sm" variant="secondary">
-            未使用
+            {t("Unused")}
           </Badge>
         )}
       </TableCell>
@@ -283,7 +288,7 @@ function DefaultNarratorRow({
           variant="ghost"
           size="sm"
           shape="circle"
-          aria-label="编辑默认角色参数"
+          aria-label={t("Edit default character parameters")}
           onClick={onEdit}
         >
           <PencilIcon />
@@ -322,7 +327,7 @@ function DefaultNarratorEditDialog({
     mutationFn: async () => {
       const parsed = parseCustomArgs(customArgsText);
       if (!parsed.ok) {
-        throw new Error("自定义参数不是合法的 JSON 对象");
+        throw new Error(t("Custom parameters must be a valid JSON object"));
       }
       const customArgs = parsed.value;
       const vs: VoiceSettings | null =
@@ -360,7 +365,7 @@ function DefaultNarratorEditDialog({
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -371,23 +376,23 @@ function DefaultNarratorEditDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="编辑默认角色"
-      description="未指定角色的段落将使用此默认声音配置。"
+      title={t("Edit default character")}
+      description={t("Segments without a character use these voice settings.")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => saveMut.mutate()}>
-            {submitting ? "保存中…" : "保存"}
+            {submitting ? t("Saving…") : t("Save")}
           </Button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-content-200">自定义参数</label>
+          <label className="text-sm text-content-200">{t("Custom parameters")}</label>
           <Textarea
             value={customArgsText}
             onChange={(v) => {
@@ -397,16 +402,16 @@ function DefaultNarratorEditDialog({
                 setCustomArgsError("");
               } else {
                 const result = parseCustomArgs(v);
-                setCustomArgsError(result.ok ? "" : "请输入合法的 JSON 对象");
+                setCustomArgsError(result.ok ? "" : t("Enter a valid JSON object"));
               }
             }}
-            placeholder='例如：{"emotion": "happy", "language": "zh"}'
+            placeholder={t('Example: {"emotion": "happy", "language": "zh"}')}
             rows={3}
             className="w-full font-mono text-xs"
           />
           {customArgsError && <span className="text-xs text-error">{customArgsError}</span>}
           <span className="text-xs text-content-400">
-            JSON 格式，合成时将作为额外请求参数发送（优先级低于标准参数）
+            {t("Extra synthesis parameters in JSON. Standard parameters take precedence.")}
           </span>
         </div>
       </div>
@@ -438,18 +443,18 @@ function NarratorRow({
         <VoiceSelect
           value={narrator.voiceId}
           onChange={(id) => onChangeVoice(id)}
-          placeholder="使用项目默认"
-          dialogTitle={`为 "${narrator.name}" 选择声音`}
+          placeholder={t("Use project default")}
+          dialogTitle={t("Choose a voice for “{0}”", narrator.name)}
         />
       </TableCell>
       <TableCell>
         {inUse ? (
           <Badge size="sm" variant="info">
-            被 {narrator.usageCount} 个段落引用
+            {t("Used by {0} segments", narrator.usageCount)}
           </Badge>
         ) : (
           <Badge size="sm" variant="secondary">
-            未使用
+            {t("Unused")}
           </Badge>
         )}
       </TableCell>
@@ -459,21 +464,21 @@ function NarratorRow({
           items={[
             {
               key: "edit",
-              label: "编辑",
+              label: t("Edit"),
               icon: <PencilIcon />,
               onSelect: onEdit,
             },
             { type: "separator" },
             {
               key: "delete",
-              label: "删除",
+              label: t("Delete"),
               icon: <TrashIcon />,
               danger: true,
               onSelect: onDelete,
             },
           ]}
         >
-          <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+          <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
             <MoreHorizontalIcon />
           </Button>
         </Dropdown>

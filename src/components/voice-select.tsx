@@ -4,6 +4,7 @@ import { ChevronDownIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useAutoSubmit } from "@/components/form";
 import VoicePickerDialog from "@/components/voices/voice-picker-dialog";
+import { t } from "@/i18n";
 import { getVoicesByIds, type VoiceListItem } from "@/lib/voices.functions";
 import { cn } from "@/utils/cn";
 
@@ -21,7 +22,7 @@ export type VoiceSelectProps = {
 export default function VoiceSelect({
   value,
   onChange,
-  placeholder = "请选择…",
+  placeholder = t("Select…"),
   dialogTitle,
   dialogDescription,
   clearable = true,
@@ -81,7 +82,7 @@ export default function VoiceSelect({
             <span
               role="button"
               tabIndex={-1}
-              aria-label="清除"
+              aria-label={t("Clear")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();

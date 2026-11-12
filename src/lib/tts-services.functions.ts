@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { type TTSServiceRow, ttsServices, voices } from "@/db/schema";
+import { t } from "@/i18n";
 import {
   type TTSCapabilities,
   TTSServiceType,
@@ -93,10 +94,24 @@ const settingsSchema = z
   .nullable();
 
 const baseFields = {
-  name: z.string().trim().min(1, "请输入名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a name") })
+    .max(120),
   type: z.union([z.literal(TTSServiceType.OpenTTS), z.literal(TTSServiceType.OpenAITTS)]),
-  baseUrl: z.string().trim().min(1, "请输入 Base URL").url("URL 格式不正确"),
-  previewBaseUrl: z.string().trim().url("URL 格式不正确").or(z.literal("")).nullable().optional(),
+  baseUrl: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a base URL") })
+    .url({ error: () => t("Invalid URL") }),
+  previewBaseUrl: z
+    .string()
+    .trim()
+    .url({ error: () => t("Invalid URL") })
+    .or(z.literal(""))
+    .nullable()
+    .optional(),
   bearerToken: z.string().trim().nullable(),
   settings: settingsSchema,
 };
@@ -130,7 +145,7 @@ async function fetchHealthz(
     }
     const json = (await resp.json()) as HealthzResponse;
     if (!json || typeof json !== "object" || !json.capabilities) {
-      throw new Error("响应缺少 capabilities 字段");
+      throw new Error(t("Response is missing capabilities"));
     }
     return json;
   } finally {
@@ -199,7 +214,7 @@ export const updateTTSService = createServerFn({ method: "POST" })
       .set(updates)
       .where(eq(ttsServices.id, data.id))
       .returning(listColumns);
-    if (!updated) throw new Error("TTS 服务不存在");
+    if (!updated) throw new Error(t("TTS service not found"));
     return toListItem(updated);
   });
 
@@ -237,9 +252,9 @@ export const testTTSService = createServerFn({ method: "POST" })
       latencyMs: number;
     }> => {
       const [svc] = await db.select().from(ttsServices).where(eq(ttsServices.id, data.id));
-      if (!svc) throw new Error("TTS 服务不存在");
+      if (!svc) throw new Error(t("TTS service not found"));
       if (svc.type !== TTSServiceType.OpenTTS) {
-        throw new Error("当前服务类型不支持测试连接");
+        throw new Error(t("This service does not support connection tests"));
       }
       const start = Date.now();
       const health = await fetchHealthz(svc.baseUrl, svc.bearerToken);
@@ -307,9 +322,9 @@ export const syncTTSVoices = createServerFn({ method: "POST" })
       total: number;
     }> => {
       const [svc] = await db.select().from(ttsServices).where(eq(ttsServices.id, data.id));
-      if (!svc) throw new Error("TTS 服务不存在");
+      if (!svc) throw new Error(t("TTS service not found"));
       if (svc.type !== TTSServiceType.OpenTTS) {
-        throw new Error("当前服务类型不支持同步声音库");
+        throw new Error(t("This service does not support voice sync"));
       }
       const remote = await fetchRemoteVoices(svc.baseUrl, svc.bearerToken);
       const existing = await db.select().from(voices).where(eq(voices.ttsServiceId, svc.id));

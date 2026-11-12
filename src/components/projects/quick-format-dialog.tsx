@@ -4,6 +4,7 @@ import Checkbox from "@/components/ui/checkbox";
 import Dialog from "@/components/ui/dialog";
 import InputNumber from "@/components/ui/input-number";
 import Switch from "@/components/ui/switch";
+import { t } from "@/i18n";
 import {
   defaultRules,
   punctuationGroups,
@@ -25,18 +26,18 @@ export default function QuickFormatDialog({
   return (
     <Dialog
       open
-      title="快速格式化规则"
-      description="格式化时会删除空行，包括只有空白字符的行。"
+      title={t("Quick format rules")}
+      description={t("Formatting removes empty and whitespace-only lines.")}
       onOpenChange={(open) => {
         if (!open) onCancel();
       }}
       footer={
         <>
           <Button variant="ghost" className="mr-auto" onClick={() => setRules(defaultRules)}>
-            恢复默认规则
+            {t("Restore default rules")}
           </Button>
           <Button variant="ghost" onClick={onCancel}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -51,7 +52,7 @@ export default function QuickFormatDialog({
     >
       <div className="space-y-5 text-sm">
         <fieldset>
-          <legend className="mb-2">在这些标点后分段</legend>
+          <legend className="mb-2">{t("Split after these punctuation marks")}</legend>
           <div className="grid grid-cols-3 gap-2">
             {punctuationGroups.map(({ chars, label }) => (
               <Checkbox
@@ -71,22 +72,22 @@ export default function QuickFormatDialog({
           </div>
         </fieldset>
         <fieldset className="space-y-2">
-          <legend>同一原文行内的成对符号</legend>
+          <legend>{t("Paired punctuation within a line")}</legend>
           <Checkbox
             className="flex"
-            label="引号内不拆分（“ ”、「 」等）"
+            label={t("Keep quoted text together")}
             value={rules.keepQuotes}
             onChange={(keepQuotes) => setRules((prev) => ({ ...prev, keepQuotes }))}
           />
           <Checkbox
             className="flex"
-            label="括号和书名号内不拆分（（ ）、【 】、《 》等）"
+            label={t("Keep text inside brackets and title marks together")}
             value={rules.keepBrackets}
             onChange={(keepBrackets) => setRules((prev) => ({ ...prev, keepBrackets }))}
           />
         </fieldset>
         <Switch
-          label="将短句合并到上一段"
+          label={t("Merge short sentences into the preceding segment")}
           value={rules.mergeShort}
           onChange={(mergeShort) => setRules((prev) => ({ ...prev, mergeShort }))}
         />
@@ -95,8 +96,8 @@ export default function QuickFormatDialog({
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
-                  ["shortLimit", "短句最多字数"],
-                  ["previousLimit", "上一段最多字数"],
+                  ["shortLimit", t("Maximum short sentence length")],
+                  ["previousLimit", t("Maximum preceding segment length")],
                 ] as const
               ).map(([key, label]) => (
                 <label key={key} className="flex flex-col gap-1.5">
@@ -110,9 +111,13 @@ export default function QuickFormatDialog({
                 </label>
               ))}
             </div>
-            <p className="text-xs text-content-400">标点和空白不计入字数。仅合并相同角色的文本。</p>
+            <p className="text-xs text-content-400">
+              {t(
+                "Punctuation and spaces are excluded. Only text from the same character is merged.",
+              )}
+            </p>
             <Checkbox
-              label="允许跨原文换行合并"
+              label={t("Allow merging across original line breaks")}
               value={rules.acrossLines}
               onChange={(acrossLines) => setRules((prev) => ({ ...prev, acrossLines }))}
             />

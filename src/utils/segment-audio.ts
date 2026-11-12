@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 export function editSelection(audio: AudioBuffer, start: number, end: number, silence: boolean) {
   const next = new AudioBuffer({
     length: silence ? audio.length : audio.length - (end - start),
@@ -19,7 +20,7 @@ export function encodeWav(audio: AudioBuffer) {
   );
   const stride = channels.length * 2;
   const size = audio.length * stride;
-  if (size + 44 > 50 * 1024 * 1024) throw new Error("编辑后的 WAV 超过 50 MB");
+  if (size + 44 > 50 * 1024 * 1024) throw new Error(t("Edited WAV exceeds 50 MB"));
   const buffer = new ArrayBuffer(44 + size);
   const view = new DataView(buffer);
   const bytes = new Uint8Array(buffer);

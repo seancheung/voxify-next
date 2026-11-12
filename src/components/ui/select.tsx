@@ -17,6 +17,7 @@ import {
 import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/utils/cn";
 
 const triggerVariants = cva(
@@ -67,8 +68,8 @@ export default function Select<T = unknown>({
   defaultValue,
   onChange,
   options,
-  placeholder = "请选择…",
-  emptyMessage = "暂无选项",
+  placeholder = t("Select…"),
+  emptyMessage = t("No options"),
   icon,
   error,
   disabled,
@@ -190,7 +191,7 @@ export default function Select<T = unknown>({
             <span
               role="button"
               tabIndex={-1}
-              aria-label="清除"
+              aria-label={t("Clear")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();

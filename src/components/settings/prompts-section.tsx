@@ -10,6 +10,7 @@ import Skeleton from "@/components/ui/skeleton";
 import Switch from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { t } from "@/i18n";
 import {
   deletePrompt,
   importDefaultPrompts,
@@ -42,7 +43,7 @@ export default function PromptsSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["prompts"] }),
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -52,11 +53,11 @@ export default function PromptsSection() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["prompts"] });
       setConfirmingDelete(null);
-      toast.success("已删除提示词");
+      toast.success(t("Prompt deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -65,11 +66,11 @@ export default function PromptsSection() {
     mutationFn: () => importDefaultsFn(),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["prompts"] });
-      toast.success(`已导入 ${result.inserted} 条默认提示词`);
+      toast.success(t("Imported {0} default prompts", result.inserted));
     },
     onError: (err) =>
       toast.error({
-        title: "导入失败",
+        title: t("Import failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -78,14 +79,14 @@ export default function PromptsSection() {
     <section className="rounded-lg border border-content-400/20 bg-base-200 p-6">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl text-content-100">提示词</h2>
+          <h2 className="text-xl text-content-100">{t("Prompt")}</h2>
           <p className="mt-1 text-sm text-content-300">
-            可复用的 LLM 提示词模板，项目级别可选择具体使用哪一条
+            {t("Reusable LLM prompt templates that can be selected per project")}
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          添加提示词
+          {t("Add prompt")}
         </Button>
       </header>
 
@@ -97,9 +98,11 @@ export default function PromptsSection() {
         </ul>
       ) : isLoading ? null : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-content-400/15 py-12 text-content-400">
-          <p className="text-sm">还没有提示词，点击右上角添加</p>
+          <p className="text-sm">{t("Add a prompt to get started")}</p>
           <p className="text-xs text-content-400/80">
-            或者导入内置的默认提示词（中英文 · 分段 / 角色识别 共 4 条）
+            {t(
+              "Or import four built-in English and Chinese prompts for segmentation and character recognition",
+            )}
           </p>
           <Button
             variant="secondary"
@@ -108,7 +111,7 @@ export default function PromptsSection() {
             disabled={importDefaultsMut.isPending}
           >
             <DownloadIcon />
-            {importDefaultsMut.isPending ? "导入中…" : "导入默认提示词"}
+            {importDefaultsMut.isPending ? t("Importing…") : t("Import default prompts")}
           </Button>
         </div>
       ) : (
@@ -137,28 +140,28 @@ export default function PromptsSection() {
                   value={p.enabled ?? false}
                   onChange={(enabled) => toggleMut.mutate({ id: p.id, enabled })}
                   size="sm"
-                  aria-label={p.enabled ? "禁用" : "启用"}
+                  aria-label={p.enabled ? t("Disable") : t("Enable")}
                 />
                 <Dropdown
                   align="end"
                   items={[
                     {
                       key: "edit",
-                      label: "编辑",
+                      label: t("Edit"),
                       icon: <PencilIcon />,
                       onSelect: () => setEditing(p),
                     },
                     { type: "separator" },
                     {
                       key: "delete",
-                      label: "删除",
+                      label: t("Delete"),
                       icon: <TrashIcon />,
                       danger: true,
                       onSelect: () => setConfirmingDelete(p),
                     },
                   ]}
                 >
-                  <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+                  <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
                     <MoreHorizontalIcon />
                   </Button>
                 </Dropdown>
@@ -184,10 +187,10 @@ export default function PromptsSection() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除提示词"
+        title={t("Delete prompt?")}
         description={
           confirmingDelete
-            ? `提示词 “${confirmingDelete.name}” 将被删除，操作不可撤销。`
+            ? t("“{0}” will be permanently deleted.", confirmingDelete.name)
             : undefined
         }
         size="sm"
@@ -198,7 +201,7 @@ export default function PromptsSection() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -207,7 +210,7 @@ export default function PromptsSection() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }

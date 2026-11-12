@@ -20,6 +20,7 @@ import Tabs from "@/components/ui/tab";
 import { toast } from "@/components/ui/toast";
 import { useExportJobsStream } from "@/hooks/use-export-jobs-stream";
 import { useTTSJobsStream } from "@/hooks/use-tts-jobs-stream";
+import { t } from "@/i18n";
 import {
   cancelExportJob,
   clearCompletedExportJobs,
@@ -58,18 +59,51 @@ function groupOf(state: string): StateGroup {
 }
 
 const groupLabel: Record<StateGroup, string> = {
-  active: "进行中",
-  pending: "等待中",
-  completed: "完成",
-  failed: "失败",
+  get active() {
+    return t("Active");
+  },
+  get pending() {
+    return t("Waiting");
+  },
+  get completed() {
+    return t("Completed");
+  },
+  get failed() {
+    return t("Failure");
+  },
 };
 
 const filterOptions: SelectOption<FilterKey>[] = [
-  { value: "all", label: "全部" },
-  { value: "active", label: groupLabel.active },
-  { value: "pending", label: groupLabel.pending },
-  { value: "failed", label: groupLabel.failed },
-  { value: "completed", label: groupLabel.completed },
+  {
+    value: "all",
+    get label() {
+      return t("All");
+    },
+  },
+  {
+    value: "active",
+    get label() {
+      return groupLabel.active;
+    },
+  },
+  {
+    value: "pending",
+    get label() {
+      return groupLabel.pending;
+    },
+  },
+  {
+    value: "failed",
+    get label() {
+      return groupLabel.failed;
+    },
+  },
+  {
+    value: "completed",
+    get label() {
+      return groupLabel.completed;
+    },
+  },
 ];
 
 function StatusIcon({ group }: { group: StateGroup }) {
@@ -136,15 +170,15 @@ export default function TasksDrawer({
       onOpenChange={onOpenChange}
       side="right"
       size="lg"
-      title="后台任务"
-      description="查看语音合成、声音设计和项目导出的任务状态"
+      title={t("Background tasks")}
+      description={t("View speech synthesis, voice design and export tasks")}
     >
       <div className="-mt-2 mb-4">
         <Tabs<QueueKey>
           items={[
-            { value: "tts", label: "语音合成" },
-            { value: "design-voice", label: "声音设计" },
-            { value: "export", label: "项目导出" },
+            { value: "tts", label: t("Speech synthesis") },
+            { value: "design-voice", label: t("Voice design") },
+            { value: "export", label: t("Project exports") },
           ]}
           value={queue}
           onChange={setQueue}
@@ -170,8 +204,8 @@ function DesignPanel({ open }: { open: boolean }) {
     refetchInterval: open ? 1000 : false,
   });
   const [filter, setFilter] = useState<FilterKey>("all");
-  if (isError && !data) return <p role="alert">声音设计任务加载失败</p>;
-  if (!data) return <p role="status">正在加载声音设计任务…</p>;
+  if (isError && !data) return <p role="alert">{t("Failed to load voice design tasks")}</p>;
+  if (!data) return <p role="status">{t("Loading voice design tasks…")}</p>;
   const { counts, jobs } = data;
   const visible = takeLatestPerGroup(jobs, filter);
   return (
@@ -188,7 +222,7 @@ function DesignPanel({ open }: { open: boolean }) {
       {visible.map((job) => (
         <JobRow
           key={job.id}
-          title={job.name ?? `声音设计 #${job.designId}`}
+          title={job.name ?? t("Voice design #{0}", job.designId)}
           description={groupLabel[groupOf(job.state)]}
           group={groupOf(job.state)}
           timestamp={job.finishedAt ?? job.processedAt ?? job.createdAt}
@@ -218,7 +252,7 @@ function TTSPanel({ open }: { open: boolean }) {
     onSuccess: invalidateSummary,
     onError: (err) =>
       toast.error({
-        title: "操作失败",
+        title: t("Operation failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -226,21 +260,21 @@ function TTSPanel({ open }: { open: boolean }) {
     mutationFn: (jobId: string) => retryFn({ data: { jobId } }),
     onSuccess: () => {
       invalidateSummary();
-      toast.success("已加入重试");
+      toast.success(t("Queued for retry"));
     },
     onError: (err) =>
       toast.error({
-        title: "重试失败",
+        title: t("Retry failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
   const clearCompletedMut = useMutation({
     mutationFn: () => clearCompletedFn(),
     onSuccess: ({ count }) =>
-      toast.success(count > 0 ? `已清空 ${count} 条已完成任务` : "无已完成任务"),
+      toast.success(count > 0 ? t("Cleared {0} completed tasks", count) : t("No completed tasks")),
     onError: (err) =>
       toast.error({
-        title: "清空失败",
+        title: t("Failed to clear tasks"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -248,11 +282,11 @@ function TTSPanel({ open }: { open: boolean }) {
     mutationFn: () => clearWaitingFn(),
     onSuccess: ({ count }) => {
       invalidateSummary();
-      toast.success(count > 0 ? `已删除 ${count} 条排队任务` : "无排队任务");
+      toast.success(count > 0 ? t("Removed {0} queued tasks", count) : t("No queued tasks"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -260,11 +294,11 @@ function TTSPanel({ open }: { open: boolean }) {
     mutationFn: () => retryAllFailedFn(),
     onSuccess: ({ count }) => {
       invalidateSummary();
-      toast.success(count > 0 ? `已重试 ${count} 条失败任务` : "无失败任务");
+      toast.success(count > 0 ? t("Retried {0} failed tasks", count) : t("No failed tasks"));
     },
     onError: (err) =>
       toast.error({
-        title: "重试失败",
+        title: t("Retry failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -272,11 +306,11 @@ function TTSPanel({ open }: { open: boolean }) {
     mutationFn: () => clearFailedFn(),
     onSuccess: ({ count }) => {
       invalidateSummary();
-      toast.success(count > 0 ? `已删除 ${count} 条失败任务` : "无失败任务");
+      toast.success(count > 0 ? t("Removed {0} failed tasks", count) : t("No failed tasks"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -294,8 +328,8 @@ function TTSPanel({ open }: { open: boolean }) {
           shape="circle"
           onClick={() => cancelMut.mutate(job.id)}
           disabled={cancelMut.isPending}
-          aria-label="停止"
-          title="停止"
+          aria-label={t("Stop")}
+          title={t("Stop")}
         >
           <SquareIcon />
         </Button>
@@ -309,8 +343,8 @@ function TTSPanel({ open }: { open: boolean }) {
           shape="circle"
           onClick={() => cancelMut.mutate(job.id)}
           disabled={cancelMut.isPending}
-          aria-label="删除"
-          title="从队列移除"
+          aria-label={t("Delete")}
+          title={t("Remove from queue")}
         >
           <XIcon />
         </Button>
@@ -325,8 +359,8 @@ function TTSPanel({ open }: { open: boolean }) {
             shape="circle"
             onClick={() => retryMut.mutate(job.id)}
             disabled={retryMut.isPending}
-            aria-label="重试"
-            title="重试"
+            aria-label={t("Retry")}
+            title={t("Retry")}
           >
             <RefreshCwIcon />
           </Button>
@@ -336,8 +370,8 @@ function TTSPanel({ open }: { open: boolean }) {
             shape="circle"
             onClick={() => cancelMut.mutate(job.id)}
             disabled={cancelMut.isPending}
-            aria-label="删除"
-            title="删除"
+            aria-label={t("Delete")}
+            title={t("Delete")}
           >
             <XIcon />
           </Button>
@@ -351,8 +385,8 @@ function TTSPanel({ open }: { open: boolean }) {
         shape="circle"
         onClick={() => cancelMut.mutate(job.id)}
         disabled={cancelMut.isPending}
-        aria-label="删除"
-        title="删除"
+        aria-label={t("Delete")}
+        title={t("Delete")}
       >
         <XIcon />
       </Button>
@@ -370,7 +404,7 @@ function TTSPanel({ open }: { open: boolean }) {
             disabled={clearCompletedMut.isPending}
           >
             <Trash2Icon />
-            清空完成
+            {t("Clear finished")}
           </Button>
         )}
         {(filter === "all" || filter === "failed") && counts.failed > 0 && (
@@ -381,7 +415,7 @@ function TTSPanel({ open }: { open: boolean }) {
             disabled={retryAllFailedMut.isPending}
           >
             <RefreshCwIcon />
-            全部重试
+            {t("Retry all")}
           </Button>
         )}
         {(filter === "all" || filter === "failed") && counts.failed > 0 && (
@@ -392,7 +426,7 @@ function TTSPanel({ open }: { open: boolean }) {
             disabled={clearFailedMut.isPending}
           >
             <Trash2Icon />
-            清空失败
+            {t("Failed to clear tasks")}
           </Button>
         )}
         {(filter === "all" || filter === "pending") && counts.pending > 0 && (
@@ -403,7 +437,7 @@ function TTSPanel({ open }: { open: boolean }) {
             disabled={clearWaitingMut.isPending}
           >
             <Trash2Icon />
-            取消全部
+            {t("Cancel all")}
           </Button>
         )}
       </div>
@@ -452,17 +486,17 @@ function ExportPanel({ open }: { open: boolean }) {
     onSuccess: invalidateSummary,
     onError: (err) =>
       toast.error({
-        title: "操作失败",
+        title: t("Operation failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
   const clearCompletedMut = useMutation({
     mutationFn: () => clearCompletedFn(),
     onSuccess: ({ count }) =>
-      toast.success(count > 0 ? `已清空 ${count} 条已完成任务` : "无已完成任务"),
+      toast.success(count > 0 ? t("Cleared {0} completed tasks", count) : t("No completed tasks")),
     onError: (err) =>
       toast.error({
-        title: "清空失败",
+        title: t("Failed to clear tasks"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -470,11 +504,11 @@ function ExportPanel({ open }: { open: boolean }) {
     mutationFn: () => clearWaitingFn(),
     onSuccess: ({ count }) => {
       invalidateSummary();
-      toast.success(count > 0 ? `已删除 ${count} 条排队任务` : "无排队任务");
+      toast.success(count > 0 ? t("Removed {0} queued tasks", count) : t("No queued tasks"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -482,11 +516,11 @@ function ExportPanel({ open }: { open: boolean }) {
     mutationFn: () => clearFailedFn(),
     onSuccess: ({ count }) => {
       invalidateSummary();
-      toast.success(count > 0 ? `已删除 ${count} 条失败任务` : "无失败任务");
+      toast.success(count > 0 ? t("Removed {0} failed tasks", count) : t("No failed tasks"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -504,8 +538,8 @@ function ExportPanel({ open }: { open: boolean }) {
           shape="circle"
           onClick={() => cancelMut.mutate(job.id)}
           disabled={cancelMut.isPending}
-          aria-label={group === "active" ? "停止" : "删除"}
-          title={group === "active" ? "停止" : "从队列移除"}
+          aria-label={group === "active" ? t("Stop") : t("Delete")}
+          title={group === "active" ? t("Stop") : t("Remove from queue")}
         >
           {group === "active" ? <SquareIcon /> : <XIcon />}
         </Button>
@@ -518,8 +552,8 @@ function ExportPanel({ open }: { open: boolean }) {
         shape="circle"
         onClick={() => cancelMut.mutate(job.id)}
         disabled={cancelMut.isPending}
-        aria-label="删除"
-        title="删除"
+        aria-label={t("Delete")}
+        title={t("Delete")}
       >
         <XIcon />
       </Button>
@@ -537,7 +571,7 @@ function ExportPanel({ open }: { open: boolean }) {
             disabled={clearWaitingMut.isPending}
           >
             <Trash2Icon />
-            取消全部
+            {t("Cancel all")}
           </Button>
         )}
         {(filter === "all" || filter === "failed") && counts.failed > 0 && (
@@ -548,7 +582,7 @@ function ExportPanel({ open }: { open: boolean }) {
             disabled={clearFailedMut.isPending}
           >
             <Trash2Icon />
-            清空失败
+            {t("Failed to clear tasks")}
           </Button>
         )}
         {(filter === "all" || filter === "completed") && counts.completed > 0 && (
@@ -559,7 +593,7 @@ function ExportPanel({ open }: { open: boolean }) {
             disabled={clearCompletedMut.isPending}
           >
             <Trash2Icon />
-            清空完成
+            {t("Clear finished")}
           </Button>
         )}
       </div>
@@ -580,7 +614,7 @@ function ExportPanel({ open }: { open: boolean }) {
       {visibleJobs.map((job) => (
         <JobRow
           key={job.id}
-          title={`项目 #${job.projectId}`}
+          title={t("Project #{0}", job.projectId)}
           description={`${scopeLabel(job.scope)} · ${job.format.toUpperCase()}`}
           group={groupOf(job.state)}
           timestamp={job.finishedAt ?? job.processedAt ?? job.createdAt}
@@ -614,7 +648,7 @@ function PanelLayout({
   children: React.ReactNode;
 }) {
   const filterTotal = filter === "all" ? total : (counts[filter as StateGroup] ?? 0);
-  const filterLabel = filterOptions.find((o) => o.value === filter)?.label ?? "全部";
+  const filterLabel = filterOptions.find((o) => o.value === filter)?.label ?? t("All");
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
@@ -639,7 +673,9 @@ function PanelLayout({
             <ListChecksIcon className="size-10" />
           )}
           <p className="text-sm">
-            {filter === "all" ? "暂无任务" : `暂无${filterLabel.replace(/（.*）/, "")}的任务`}
+            {filter === "all"
+              ? t("No tasks yet")
+              : t("No tasks with status {0}", filterLabel.replace(/（.*）/, ""))}
           </p>
         </div>
       ) : (
@@ -647,7 +683,8 @@ function PanelLayout({
       )}
       {!isEmpty && (
         <p className="text-xs text-content-400">
-          显示 {displayedCount} 条{displayedCount < filterTotal && ` / 共 ${filterTotal} 条`}
+          {t("Showing {0} entries", displayedCount)}
+          {displayedCount < filterTotal && t(" / {0} total", filterTotal)}
         </p>
       )}
     </div>
@@ -684,7 +721,7 @@ function takeLatestPerGroup<T extends { state: string; createdAt: number }>(
 }
 
 function scopeLabel(scope: ExportJobInfo["scope"]): string {
-  if (scope === "chapter") return "本章节";
-  if (scope === "all-merged") return "全部章节（拼接）";
-  return "全部章节（分轨）";
+  if (scope === "chapter") return t("Current chapter");
+  if (scope === "all-merged") return t("All chapters (merged)");
+  return t("All chapters (separate tracks)");
 }

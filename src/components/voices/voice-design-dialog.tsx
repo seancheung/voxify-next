@@ -6,6 +6,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import { listTTSServices } from "@/lib/tts-services.functions";
 import { createVoiceDesign, createVoiceDesignSchema } from "@/lib/voice-designs.functions";
 
@@ -54,7 +55,7 @@ export default function VoiceDesignDialog({
     },
     onError: (err) =>
       toast.error({
-        title: "提交失败",
+        title: t("Submission failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -80,19 +81,19 @@ export default function VoiceDesignDialog({
       onOpenChange={(next) => {
         if (!submitting) onOpenChange(next);
       }}
-      title="设计声音"
-      description="使用自然语言描述生成新的声音，并合成一段示例音频。"
+      title={t("Design voice")}
+      description={t("Describe a voice and generate a sample recording.")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button
             disabled={submitting || serviceOptions.length === 0}
             onClick={() => submitRef.current?.()}
           >
-            {submitting ? "提交中…" : "开始生成"}
+            {submitting ? t("Submitting…") : t("Start generation")}
           </Button>
         </>
       }
@@ -135,10 +136,12 @@ function VoiceDesignDialogForm({
       <div className="flex flex-col gap-4">
         <form.AppField name="ttsServiceId">
           {(field) => (
-            <field.FormField label="TTS 服务">
+            <field.FormField label={t("TTS services")}>
               <field.SelectField<number>
                 options={serviceOptions}
-                placeholder={serviceOptions.length === 0 ? "暂无支持声音设计的服务" : "请选择…"}
+                placeholder={
+                  serviceOptions.length === 0 ? t("No services support voice design") : t("Select…")
+                }
                 disabled={serviceOptions.length === 0}
               />
             </field.FormField>
@@ -146,22 +149,25 @@ function VoiceDesignDialogForm({
         </form.AppField>
         <form.AppField name="name">
           {(field) => (
-            <field.FormField label="名称">
-              <field.InputField placeholder="给这个声音起个名字" autoFocus />
+            <field.FormField label={t("Name")}>
+              <field.InputField placeholder={t("Give this voice a name")} autoFocus />
             </field.FormField>
           )}
         </form.AppField>
         <form.AppField name="instruct">
           {(field) => (
-            <field.FormField label="声音描述" description="例如：female, british accent, warm tone">
-              <field.TextareaField rows={3} placeholder="描述想要的声音…" />
+            <field.FormField
+              label={t("Voice description")}
+              description={t("Example: female, British accent, warm tone")}
+            >
+              <field.TextareaField rows={3} placeholder={t("Describe the voice…")} />
             </field.FormField>
           )}
         </form.AppField>
         <form.AppField name="input">
           {(field) => (
-            <field.FormField label="合成文本">
-              <field.TextareaField rows={4} placeholder="将用于示例音频的文本" />
+            <field.FormField label={t("Sample text")}>
+              <field.TextareaField rows={4} placeholder={t("Text to synthesize for the preview")} />
             </field.FormField>
           )}
         </form.AppField>

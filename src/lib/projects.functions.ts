@@ -24,6 +24,7 @@ import {
   segments,
   ttsGenerations,
 } from "@/db/schema";
+import { t } from "@/i18n";
 import type { ProjectDetail } from "@/lib/chapters.functions";
 import type { ProjectSettings } from "@/types/project";
 import type { CustomArgs, VoiceSettings } from "@/types/tts";
@@ -168,7 +169,11 @@ export const listProjects = createServerFn({ method: "GET" })
   });
 
 export const createProjectSchema = z.object({
-  name: z.string().trim().min(1, "请输入项目名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a project name") })
+    .max(120),
   author: z.string().trim().max(120).optional().or(z.literal("")),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   locale: z.string().trim().optional().or(z.literal("")),
@@ -196,7 +201,11 @@ export const createProject = createServerFn({ method: "POST" })
   });
 
 export const importProjectSchema = z.object({
-  name: z.string().trim().min(1, "请输入项目名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a project name") })
+    .max(120),
   author: z.string().trim().max(120).optional().or(z.literal("")),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   locale: z.string().trim().optional().or(z.literal("")),
@@ -207,7 +216,7 @@ export const importProjectSchema = z.object({
         segments: z.array(z.string().trim().min(1).max(20000)).min(1).max(5000),
       }),
     )
-    .min(1, "至少导入一个章节")
+    .min(1, { error: () => t("Import at least one chapter") })
     .max(2000),
 });
 
@@ -334,12 +343,12 @@ export const duplicateProject = createServerFn({ method: "POST" })
         .from(projects)
         .where(and(eq(projects.id, data.id), isNull(projects.deletedAt)))
         .all();
-      if (!src) throw new Error("项目不存在");
+      if (!src) throw new Error(t("Project not found"));
 
       const [copied] = tx
         .insert(projects)
         .values({
-          name: `${src.name} (副本)`,
+          name: t("{0} (copy)", src.name),
           description: src.description,
           author: src.author,
           coverFileId: null,
@@ -432,7 +441,11 @@ export const duplicateProject = createServerFn({ method: "POST" })
 
 export const updateProjectSchema = z.object({
   id: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入项目名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a project name") })
+    .max(120),
   description: z.string().trim().max(2000).nullable(),
   author: z.string().trim().max(120).nullable(),
   coverFileId: z.number().int().positive().nullable(),
@@ -454,7 +467,7 @@ export const updateProject = createServerFn({ method: "POST" })
       })
       .from(projects)
       .where(and(eq(projects.id, data.id), isNull(projects.deletedAt)));
-    if (!current) throw new Error("项目不存在");
+    if (!current) throw new Error(t("Project not found"));
 
     const prevVoiceSettings = current.settings?.voiceSettings;
     const settings: ProjectSettings | null =
@@ -483,7 +496,7 @@ export const updateProject = createServerFn({ method: "POST" })
       })
       .where(and(eq(projects.id, data.id), isNull(projects.deletedAt)))
       .returning();
-    if (!saved) throw new Error("项目不存在");
+    if (!saved) throw new Error(t("Project not found"));
 
     // If the user cleared / replaced the cover, drop the old file row.
     // Replacement via the upload flow handles its own cleanup, but the
@@ -493,7 +506,7 @@ export const updateProject = createServerFn({ method: "POST" })
       try {
         deleteFileWithObject(current.coverFileId);
       } catch (err) {
-        console.warn("删除旧封面文件失败:", err);
+        console.warn(t("Failed to delete old cover:"), err);
       }
     }
 
@@ -542,7 +555,7 @@ export const updateProjectVoice = createServerFn({ method: "POST" })
         .select({ settings: projects.settings })
         .from(projects)
         .where(and(eq(projects.id, data.id), isNull(projects.deletedAt)));
-      if (!current) throw new Error("项目不存在");
+      if (!current) throw new Error(t("Project not found"));
 
       const vs = data.voiceSettings;
       const cleanedVs: VoiceSettings | null =
@@ -860,7 +873,7 @@ export const uploadProjectCover = createServerFn({ method: "POST" })
       !image.size ||
       image.size > MAX_COVER_BYTES
     )
-      throw new Error("请选择 10MB 以内的图片");
+      throw new Error(t("Choose an image up to 10 MB"));
     const { buildObjectKey, uploadObject, deleteObject } = await import("./storage.server");
     const { finalizeUpload, deleteFileWithObject } = await import("./files.server");
     const path = buildObjectKey("covers", image.type);
@@ -872,7 +885,7 @@ export const uploadProjectCover = createServerFn({ method: "POST" })
           .from(projects)
           .where(and(eq(projects.id, projectId), isNull(projects.deletedAt)))
           .get();
-        if (!project) throw new Error("项目不存在");
+        if (!project) throw new Error(t("Project not found"));
         const file = finalizeUpload(
           {
             path,
@@ -1023,7 +1036,7 @@ export const purgeProject = createServerFn({ method: "POST" })
       .select({ id: projects.id, coverFileId: projects.coverFileId })
       .from(projects)
       .where(and(eq(projects.id, data.id), isNotNull(projects.deletedAt)));
-    if (!project) throw new Error("项目不存在或未被删除");
+    if (!project) throw new Error(t("Project not found in the recycle bin"));
 
     const fileIds = new Set<number>();
     if (project.coverFileId != null) fileIds.add(project.coverFileId);

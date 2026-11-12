@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Reorder, useDragControls } from "motion/react";
 import Dropdown from "@/components/ui/dropdown";
+import { t } from "@/i18n";
 import type { ChapterListItem as ChapterRow } from "@/lib/chapters.functions";
 import { cn } from "@/utils/cn";
 
@@ -75,7 +76,7 @@ export default function ChapterListItem({
         </span>
         <button
           type="button"
-          aria-label="拖动排序"
+          aria-label={t("Drag to reorder")}
           data-no-select
           onPointerDown={(event) => {
             event.preventDefault();
@@ -90,7 +91,7 @@ export default function ChapterListItem({
       <div data-no-select className="relative size-6 shrink-0">
         {status && (
           <span
-            aria-label={status === "stale" ? "已生成但有更新" : "已完成生成"}
+            aria-label={status === "stale" ? t("Audio needs updating") : t("Generation complete")}
             className={cn(
               "pointer-events-none absolute inset-0 flex items-center justify-center opacity-70 transition-opacity group-hover:opacity-0",
             )}
@@ -107,20 +108,20 @@ export default function ChapterListItem({
           items={[
             {
               key: "edit",
-              label: "编辑",
+              label: t("Edit"),
               icon: <PencilIcon />,
               onSelect: onEdit,
             },
             {
               key: "duplicate",
-              label: "复制",
+              label: t("Duplicate"),
               icon: <CopyIcon />,
               onSelect: onDuplicate,
             },
             { type: "separator" },
             {
               key: "delete",
-              label: "删除",
+              label: t("Delete"),
               icon: <TrashIcon />,
               danger: true,
               onSelect: onDelete,
@@ -129,7 +130,7 @@ export default function ChapterListItem({
         >
           <button
             type="button"
-            aria-label="更多操作"
+            aria-label={t("More actions")}
             className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-content-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-base-400 hover:text-content-100 aria-expanded:opacity-100 data-[state=open]:opacity-100"
           >
             <MoreHorizontalIcon className="size-4" />

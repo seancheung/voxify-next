@@ -7,6 +7,7 @@ import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { DEFAULT_LOCALE, LOCALES, type LocaleCode } from "@/constants/locale";
+import { t } from "@/i18n";
 import { createProject, createProjectSchema } from "@/lib/projects.functions";
 
 type CreateProjectInput = z.input<typeof createProjectSchema>;
@@ -34,7 +35,7 @@ export default function NewProjectDialog({
     },
     onError: (err) => {
       toast.error({
-        title: "创建失败",
+        title: t("Creation failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     },
@@ -67,16 +68,16 @@ export default function NewProjectDialog({
     <Dialog
       open={open}
       onOpenChange={handleOpenChange}
-      title="新建项目"
-      description="填写项目基本信息，稍后可在项目内继续编辑"
+      title={t("New project")}
+      description={t("Enter the project details. You can edit them later.")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button form="new-project-form" disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "创建中…" : "创建"}
+            {submitting ? t("Creating…") : t("Create")}
           </Button>
         </>
       }
@@ -85,28 +86,28 @@ export default function NewProjectDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
-                <field.InputField placeholder="例如：小王子" autoFocus />
+              <field.FormField label={t("Name")}>
+                <field.InputField placeholder={t("Example: The Little Prince")} autoFocus />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="author">
             {(field) => (
-              <field.FormField label="作者">
-                <field.InputField placeholder="可选" />
+              <field.FormField label={t("Author")}>
+                <field.InputField placeholder={t("Optional")} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="description">
             {(field) => (
-              <field.FormField label="描述">
-                <field.InputField placeholder="可选，简要介绍这个项目" />
+              <field.FormField label={t("Description")}>
+                <field.InputField placeholder={t("Optional project summary")} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="locale">
             {(field) => (
-              <field.FormField label="语言">
+              <field.FormField label={t("Language")}>
                 <field.SelectField options={localeOptions} className="w-full" />
               </field.FormField>
             )}

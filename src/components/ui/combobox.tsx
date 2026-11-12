@@ -14,6 +14,7 @@ import {
 import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, ChevronDownIcon, Loader2Icon, PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/utils/cn";
 
 const containerVariants = cva(
@@ -75,9 +76,9 @@ export default function Combobox<T = unknown>({
   defaultValue,
   onChange,
   options,
-  placeholder = "请选择…",
-  emptyMessage = "无匹配项",
-  loadingMessage = "加载中…",
+  placeholder = t("Select…"),
+  emptyMessage = t("No matches"),
+  loadingMessage = t("Loading…"),
   icon,
   clearable = false,
   onClear,
@@ -301,7 +302,7 @@ export default function Combobox<T = unknown>({
           <button
             type="button"
             tabIndex={-1}
-            aria-label={open ? "收起" : "展开"}
+            aria-label={open ? t("Collapse") : t("Expand")}
             disabled={disabled}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
@@ -319,7 +320,7 @@ export default function Combobox<T = unknown>({
             <button
               type="button"
               tabIndex={-1}
-              aria-label="清除"
+              aria-label={t("Clear")}
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleClear}
               className="absolute inset-0 inline-flex has-icon-3.5 cursor-pointer items-center justify-center rounded text-content-400 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:text-content-200"
@@ -380,7 +381,7 @@ export default function Combobox<T = unknown>({
                     {isCreate ? (
                       <>
                         <PlusIcon className="size-3.5 shrink-0 text-content-300" />
-                        <span className="flex-1 truncate">添加 “{item.text}”</span>
+                        <span className="flex-1 truncate">{t("Add “{0}”", item.text)}</span>
                       </>
                     ) : (
                       <>
@@ -399,7 +400,7 @@ export default function Combobox<T = unknown>({
               {isFetchingMore && items.length > 0 && (
                 <div className="flex items-center justify-center gap-2 py-2 text-xs text-content-400">
                   <Loader2Icon className="size-3.5 animate-spin" />
-                  加载中…
+                  {t("Loading…")}
                 </div>
               )}
             </div>

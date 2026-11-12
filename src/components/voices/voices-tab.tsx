@@ -25,6 +25,7 @@ import VoicesToolbar, {
 import { useDebouncedState } from "@/hooks/use-debounced";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreviewPlayer } from "@/hooks/use-preview-player";
+import { t } from "@/i18n";
 import { listTTSServices } from "@/lib/tts-services.functions";
 import {
   deleteVoice,
@@ -87,7 +88,7 @@ export default function VoicesTab() {
   });
 
   const serviceOptions: SelectOption<number>[] = [
-    { value: VOICES_ALL_SERVICES, label: "全部服务" },
+    { value: VOICES_ALL_SERVICES, label: t("All services") },
     ...services.map((s) => ({ value: s.id, label: s.name })),
   ];
 
@@ -145,7 +146,7 @@ export default function VoicesTab() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["voices"] }),
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -155,11 +156,11 @@ export default function VoicesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["voices"] });
       setConfirmingDelete(null);
-      toast.success("已删除声音");
+      toast.success(t("Voice deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -179,11 +180,13 @@ export default function VoicesTab() {
       />
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="text-sm text-content-300">
-          {hasNextPage ? `已加载 ${loadedCount} 个，下滑加载更多` : `共 ${loadedCount} 个声音`}
+          {hasNextPage
+            ? t("Loaded {0} voices. Scroll for more.", loadedCount)
+            : t("{0} voices", loadedCount)}
         </p>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          新建声音
+          {t("New voice")}
         </Button>
       </div>
       {showSkeleton ? (
@@ -224,10 +227,10 @@ export default function VoicesTab() {
           </Table>
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           {isFetchingNextPage && (
-            <div className="py-6 text-center text-xs text-content-400">加载中…</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("Loading…")}</div>
           )}
           {!hasNextPage && voices.length >= PAGE_SIZE && (
-            <div className="py-6 text-center text-xs text-content-400">已经到底了</div>
+            <div className="py-6 text-center text-xs text-content-400">{t("End of list")}</div>
           )}
         </>
       )}
@@ -247,9 +250,11 @@ export default function VoicesTab() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除声音"
+        title={t("Delete voice?")}
         description={
-          confirmingDelete ? `声音 “${confirmingDelete.name}” 将被删除，操作不可撤销。` : undefined
+          confirmingDelete
+            ? t("“{0}” will be permanently removed.", confirmingDelete.name)
+            : undefined
         }
         size="sm"
         footer={
@@ -259,7 +264,7 @@ export default function VoicesTab() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -268,7 +273,7 @@ export default function VoicesTab() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }

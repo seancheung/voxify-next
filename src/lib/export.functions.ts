@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { t } from "@/i18n";
 import { appConfigSchema, DEFAULT_APP_CONFIG } from "@/lib/configs.functions";
 import type { ExportSettingsSnapshot } from "@/types/export";
 
@@ -53,7 +54,7 @@ export const startExport = createServerFn({ method: "POST" })
       .innerJoin(chapters, eq(chapters.id, segments.chapterId))
       .where(where);
     if (!count) {
-      throw new Error("没有可导出的片段（请先生成至少一个段落）");
+      throw new Error(t("Generate at least one segment before exporting"));
     }
 
     // Resolve gap values: project setting > app default > hardcoded fallback.
@@ -227,7 +228,7 @@ export const getExportDownloadUrl = createServerFn({ method: "GET" })
       .from(projectExports)
       .innerJoin(files, eq(files.id, projectExports.fileId))
       .where(eq(projectExports.id, data.id));
-    if (!row) throw new Error("文件不存在");
+    if (!row) throw new Error(t("File not found"));
     const { fileDownloadUrl } = await import("@/lib/files.server");
     const url = await fileDownloadUrl(row, { asAttachment: true });
     return { url, fileName: row.fileName };

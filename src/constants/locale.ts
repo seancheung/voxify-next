@@ -1,8 +1,14 @@
+import { t } from "@/i18n";
 export type LocaleCode = "en" | "zh-CN";
 
 export const LOCALES: ReadonlyArray<{ value: LocaleCode; label: string }> = [
   { value: "en", label: "English" },
-  { value: "zh-CN", label: "简体中文" },
+  {
+    value: "zh-CN",
+    get label() {
+      return t("Simplified Chinese");
+    },
+  },
 ];
 
 export const DEFAULT_LOCALE: LocaleCode = "en";

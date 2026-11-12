@@ -17,6 +17,7 @@ import Radio from "@/components/ui/radio";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { useExportJobsStream } from "@/hooks/use-export-jobs-stream";
+import { t } from "@/i18n";
 import { type ChapterListItem, listChapters } from "@/lib/chapters.functions";
 import {
   cancelExportJob,
@@ -55,15 +56,35 @@ const DEFAULT_BITRATE: ExportBitrate = 128;
 const DEFAULT_SAMPLE_RATE: ExportSampleRate = 44100;
 
 const SCOPE_OPTIONS: { value: ExportScope; label: string }[] = [
-  { value: "chapter", label: "本章节" },
-  { value: "all-merged", label: "全部章节（拼接）" },
-  { value: "all-split", label: "全部章节（分轨）" },
+  {
+    value: "chapter",
+    get label() {
+      return t("Current chapter");
+    },
+  },
+  {
+    value: "all-merged",
+    get label() {
+      return t("All chapters (merged)");
+    },
+  },
+  {
+    value: "all-split",
+    get label() {
+      return t("All chapters (separate tracks)");
+    },
+  },
 ];
 
 const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
   { value: "mp3", label: "MP3" },
   { value: "wav", label: "WAV" },
-  { value: "m4b", label: "M4B（含章节书签 / 元数据）" },
+  {
+    value: "m4b",
+    get label() {
+      return t("M4B (chapter bookmarks and metadata)");
+    },
+  },
 ];
 
 const BITRATE_OPTIONS: SelectOption<ExportBitrate>[] = [
@@ -80,9 +101,24 @@ const SAMPLE_RATE_OPTIONS: SelectOption<ExportSampleRate>[] = [
 ];
 
 const NORMALIZE_OPTIONS: SelectOption<-16 | -19 | -23>[] = [
-  { value: -16, label: "-16 LUFS（播客 / 流媒体）" },
-  { value: -19, label: "-19 LUFS（有声书 / ACX）" },
-  { value: -23, label: "-23 LUFS（广播 / EBU R128）" },
+  {
+    value: -16,
+    get label() {
+      return t("-16 LUFS (podcasts / streaming)");
+    },
+  },
+  {
+    value: -19,
+    get label() {
+      return t("-19 LUFS (audiobooks / ACX)");
+    },
+  },
+  {
+    value: -23,
+    get label() {
+      return t("-23 LUFS (broadcast / EBU R128)");
+    },
+  },
 ];
 
 function storageKey(projectId: number) {
@@ -155,14 +191,14 @@ export default function ExportPanel({
     mutationFn: (vars: Parameters<typeof startFn>[0]["data"]) => startFn({ data: vars }),
     onSuccess: (res) => {
       if (!res.ok) {
-        toast.warning("已有正在进行的导出任务");
+        toast.warning(t("An export is already running"));
         return;
       }
       qc.invalidateQueries({ queryKey: ["export-history", projectId] });
     },
     onError: (err) =>
       toast.error({
-        title: "开始导出失败",
+        title: t("Failed to start export"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -171,7 +207,7 @@ export default function ExportPanel({
     mutationFn: (jobId: string) => cancelFn({ data: { jobId } }),
     onError: (err) =>
       toast.error({
-        title: "终止失败",
+        title: t("Failed to abort"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -186,7 +222,7 @@ export default function ExportPanel({
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -254,12 +290,14 @@ export default function ExportPanel({
         <section className="flex flex-col gap-5 rounded-lg border border-content-400/15 bg-base-200 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg text-content-100">导出设置</h2>
-              <p className="text-xs text-content-300">配置仅对当前项目有效，会自动保存</p>
+              <h2 className="text-lg text-content-100">{t("Export settings")}</h2>
+              <p className="text-xs text-content-300">
+                {t("Changes are saved automatically for this project.")}
+              </p>
             </div>
             <Button variant="ghost" size="sm" onClick={handleResetDefaults} disabled={!!activeJob}>
               <RotateCcwIcon />
-              恢复默认
+              {t("Restore defaults")}
             </Button>
           </div>
 
@@ -275,10 +313,12 @@ export default function ExportPanel({
               debounceMs={300}
             >
               <FormRow
-                label="导出范围"
+                label={t("Export scope")}
                 description={
                   chapters.length > 1
-                    ? "可选导出当前章节、全部章节合并为单文件，或每个章节单独输出"
+                    ? t(
+                        "Export the current chapter, merge all chapters, or create one file per chapter.",
+                      )
                     : undefined
                 }
               >
@@ -293,7 +333,7 @@ export default function ExportPanel({
                 </form.AppField>
               </FormRow>
 
-              <FormRow label="格式与编码">
+              <FormRow label={t("Format and encoding")}>
                 <form.AppField name="format">
                   {(field) => (
                     <field.RadioGroupField<ExportFormat> className="flex-row gap-5">
@@ -306,7 +346,10 @@ export default function ExportPanel({
               </FormRow>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormRow label="码率" description="WAV 为无压缩格式，此项不适用">
+                <FormRow
+                  label={t("Bitrate")}
+                  description={t("Bitrate does not apply to uncompressed WAV")}
+                >
                   <form.AppField name="bitrate">
                     {(field) => (
                       <field.SelectField<ExportBitrate>
@@ -316,7 +359,10 @@ export default function ExportPanel({
                     )}
                   </form.AppField>
                 </FormRow>
-                <FormRow label="采样率" description="44.1 kHz 与多数播放器兼容，48 kHz 适用于视频">
+                <FormRow
+                  label={t("Sample rate")}
+                  description={t("44.1 kHz suits most players. Use 48 kHz for video.")}
+                >
                   <form.AppField name="sampleRate">
                     {(field) => (
                       <field.SelectField<ExportSampleRate>
@@ -329,21 +375,23 @@ export default function ExportPanel({
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormRow label="单声道" description="关闭后输出立体声">
+                <FormRow label={t("Mono")} description={t("Turn off for stereo output")}>
                   <form.AppField name="mono">
                     {(field) => (
-                      <field.SwitchField label={field.state.value ? "已开启" : "已关闭"} />
+                      <field.SwitchField label={field.state.value ? t("On") : t("Off")} />
                     )}
                   </form.AppField>
                 </FormRow>
                 <FormRow
-                  label="响度标准化"
-                  description="按 EBU R128 把最终输出归一到目标响度，避免不同章节 / 项目间响度参差"
+                  label={t("Loudness normalization")}
+                  description={t(
+                    "Normalize the output to the target loudness using EBU R128 for consistent volume across chapters and projects.",
+                  )}
                 >
                   <div className="flex flex-wrap items-center gap-4">
                     <form.AppField name="normalize">
                       {(field) => (
-                        <field.SwitchField label={field.state.value ? "已开启" : "已关闭"} />
+                        <field.SwitchField label={field.state.value ? t("On") : t("Off")} />
                       )}
                     </form.AppField>
                     <form.Subscribe selector={(s) => s.values.normalize}>
@@ -361,7 +409,12 @@ export default function ExportPanel({
                 </FormRow>
               </div>
 
-              <FormRow label="字幕" description="按段落开始 / 结束时间生成；多文件时与音频一起打包">
+              <FormRow
+                label={t("Subtitles")}
+                description={t(
+                  "Generate subtitles from segment timings. Multi-file exports include subtitles alongside the audio.",
+                )}
+              >
                 <div className="flex items-center gap-5">
                   <form.AppField name="subtitleSrt">
                     {(field) => <field.CheckboxField label="SRT" />}
@@ -379,7 +432,7 @@ export default function ExportPanel({
                 disabled={!!activeJob || startMut.isPending}
               >
                 <PlayIcon />
-                {startMut.isPending ? "提交中…" : "开始导出"}
+                {startMut.isPending ? t("Submitting…") : t("Start export")}
               </Button>
             </div>
           </form.AppForm>
@@ -393,10 +446,10 @@ export default function ExportPanel({
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除导出文件"
+        title={t("Delete exported file?")}
         description={
           confirmingDelete
-            ? `“${confirmingDelete.file.fileName}” 及其文件将被删除，操作不可撤销。`
+            ? t("“{0}” and its files will be permanently deleted.", confirmingDelete.file.fileName)
             : undefined
         }
         size="sm"
@@ -407,7 +460,7 @@ export default function ExportPanel({
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -416,7 +469,7 @@ export default function ExportPanel({
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }
@@ -452,7 +505,7 @@ function ActiveJobBanner({
   onCancel: () => void;
   cancelling: boolean;
 }) {
-  const label = state === "active" ? "正在导出…" : "排队中…";
+  const label = state === "active" ? t("Exporting…") : t("Queued…");
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-info/40 bg-info/10 px-4 py-3 text-sm text-content-100">
       <div className="flex items-center gap-2">
@@ -461,7 +514,7 @@ function ActiveJobBanner({
       </div>
       <Button variant="danger" size="sm" onClick={onCancel} disabled={cancelling}>
         <SquareIcon />
-        终止
+        {t("Abort")}
       </Button>
     </div>
   );
@@ -483,7 +536,7 @@ function HistorySection({
     },
     onError: (err) =>
       toast.error({
-        title: "下载失败",
+        title: t("Download failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -491,13 +544,13 @@ function HistorySection({
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-content-400/15 bg-base-200 p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg text-content-100">导出历史</h2>
-        <span className="text-xs text-content-400">{history.length} 条</span>
+        <h2 className="text-lg text-content-100">{t("Export history")}</h2>
+        <span className="text-xs text-content-400">{t("{0} entries", history.length)}</span>
       </div>
 
       {history.length === 0 ? (
         <div className="flex h-32 items-center justify-center text-sm text-content-400">
-          暂无导出历史
+          {t("No exports yet")}
         </div>
       ) : (
         <ul className="flex flex-col">
@@ -513,7 +566,7 @@ function HistorySection({
                 type="button"
                 className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
                 onClick={() => setShowSnapshot(row)}
-                aria-label="查看导出设置快照"
+                aria-label={t("View export settings snapshot")}
               >
                 <FileTextIcon className="size-4 shrink-0 text-content-400" />
                 <div className="flex min-w-0 flex-1 flex-col">
@@ -530,8 +583,8 @@ function HistorySection({
                   shape="circle"
                   onClick={() => downloadMut.mutate(row.id)}
                   disabled={downloadMut.isPending && downloadMut.variables === row.id}
-                  aria-label="下载"
-                  title="下载"
+                  aria-label={t("Download")}
+                  title={t("Download")}
                 >
                   <DownloadIcon />
                 </Button>
@@ -540,8 +593,8 @@ function HistorySection({
                   size="sm"
                   shape="circle"
                   onClick={() => onRequestDelete(row)}
-                  aria-label="删除"
-                  title="删除"
+                  aria-label={t("Delete")}
+                  title={t("Delete")}
                 >
                   <Trash2Icon />
                 </Button>
@@ -573,38 +626,40 @@ function SnapshotDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="导出设置快照"
+      title={t("Export settings snapshot")}
       description={item ? item.file.fileName : undefined}
       size="md"
     >
       {item && (
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
-          <SnapshotRow label="范围" value={scopeLabel(item.settings.scope)} />
-          <SnapshotRow label="格式" value={item.settings.format.toUpperCase()} />
-          <SnapshotRow label="码率" value={`${item.settings.bitrate} kbps`} />
+          <SnapshotRow label={t("Scope")} value={scopeLabel(item.settings.scope)} />
+          <SnapshotRow label={t("Format")} value={item.settings.format.toUpperCase()} />
+          <SnapshotRow label={t("Bitrate")} value={`${item.settings.bitrate} kbps`} />
           <SnapshotRow
-            label="采样率"
+            label={t("Sample rate")}
             value={`${(item.settings.sampleRate / 1000).toFixed(1)} kHz`}
           />
-          <SnapshotRow label="声道" value={item.settings.mono ? "单声道" : "立体声"} />
+          <SnapshotRow label={t("Channels")} value={item.settings.mono ? t("Mono") : t("Stereo")} />
           <SnapshotRow
-            label="响度标准化"
+            label={t("Loudness normalization")}
             value={
-              item.settings.normalizeLufs == null ? "关闭" : `${item.settings.normalizeLufs} LUFS`
+              item.settings.normalizeLufs == null
+                ? t("Close")
+                : `${item.settings.normalizeLufs} LUFS`
             }
           />
           <SnapshotRow
-            label="字幕"
+            label={t("Subtitles")}
             value={
               item.settings.subtitles.length === 0
-                ? "无"
+                ? t("None")
                 : item.settings.subtitles.map((s) => s.toUpperCase()).join(", ")
             }
           />
-          <SnapshotRow label="段落间隔" value={`${item.settings.segmentGapMs} ms`} />
-          <SnapshotRow label="章节间隔" value={`${item.settings.chapterGapMs} ms`} />
+          <SnapshotRow label={t("Segment gap")} value={`${item.settings.segmentGapMs} ms`} />
+          <SnapshotRow label={t("Chapter gap")} value={`${item.settings.chapterGapMs} ms`} />
           {item.settings.chapterName && (
-            <SnapshotRow label="章节" value={item.settings.chapterName} />
+            <SnapshotRow label={t("Chapter")} value={item.settings.chapterName} />
           )}
         </dl>
       )}
@@ -622,9 +677,9 @@ function SnapshotRow({ label, value }: { label: string; value: string }) {
 }
 
 function scopeLabel(scope: ExportScope | ExportSettingsSnapshot["scope"]) {
-  if (scope === "chapter") return "本章节";
-  if (scope === "all-merged") return "全部章节（拼接）";
-  return "全部章节（分轨）";
+  if (scope === "chapter") return t("Current chapter");
+  if (scope === "all-merged") return t("All chapters (merged)");
+  return t("All chapters (separate tracks)");
 }
 
 function formatBytes(bytes: number): string {

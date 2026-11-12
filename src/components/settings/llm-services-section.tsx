@@ -10,6 +10,7 @@ import Skeleton from "@/components/ui/skeleton";
 import Switch from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { t } from "@/i18n";
 import { syncLLMModels } from "@/lib/llm-models.functions";
 import {
   deleteLLMService,
@@ -54,7 +55,7 @@ export default function LLMServicesSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["llm-services"] }),
     onError: (err) =>
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -65,11 +66,11 @@ export default function LLMServicesSection() {
       qc.invalidateQueries({ queryKey: ["llm-services"] });
       qc.invalidateQueries({ queryKey: ["llm-models"] });
       setConfirmingDelete(null);
-      toast.success("已删除 LLM 服务");
+      toast.success(t("LLM service deleted"));
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -80,13 +81,19 @@ export default function LLMServicesSection() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["llm-models"] });
       toast.success({
-        title: "模型已同步",
-        description: `共 ${res.total} 个，新增 ${res.added}、更新 ${res.updated}、移除 ${res.removed}`,
+        title: t("Models synced"),
+        description: t(
+          "{0} total, {1} added, {2} updated, {3} removed",
+          res.total,
+          res.added,
+          res.updated,
+          res.removed,
+        ),
       });
     },
     onError: (err) =>
       toast.error({
-        title: "同步失败",
+        title: t("Sync failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
     onSettled: () => setSyncingId(null),
@@ -96,14 +103,14 @@ export default function LLMServicesSection() {
     <section className="rounded-lg border border-content-400/20 bg-base-200 p-6">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl text-content-100">LLM 服务</h2>
+          <h2 className="text-xl text-content-100">{t("LLM services")}</h2>
           <p className="mt-1 text-sm text-content-300">
-            连接大语言模型用于文本拆分、角色识别等任务
+            {t("Connect language models for segmentation and character recognition")}
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <PlusIcon />
-          添加服务
+          {t("Add service")}
         </Button>
       </header>
 
@@ -115,7 +122,7 @@ export default function LLMServicesSection() {
         </ul>
       ) : isLoading ? null : services.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-content-400/15 py-12 text-content-400">
-          <p className="text-sm">还没有 LLM 服务，点击右上角添加</p>
+          <p className="text-sm">{t("Add an LLM service to get started")}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -153,35 +160,35 @@ export default function LLMServicesSection() {
                       disabled={syncing || !svc.enabled}
                     >
                       <RefreshCcwIcon className={cn(syncing && "animate-spin")} />
-                      {syncing ? "同步中…" : "同步模型"}
+                      {syncing ? t("Syncing…") : t("Sync models")}
                     </Button>
                   )}
                   <Switch
                     value={svc.enabled ?? false}
                     onChange={(enabled) => toggleMut.mutate({ id: svc.id, enabled })}
                     size="sm"
-                    aria-label={svc.enabled ? "禁用" : "启用"}
+                    aria-label={svc.enabled ? t("Disable") : t("Enable")}
                   />
                   <Dropdown
                     align="end"
                     items={[
                       {
                         key: "edit",
-                        label: "编辑",
+                        label: t("Edit"),
                         icon: <PencilIcon />,
                         onSelect: () => setEditing(svc),
                       },
                       { type: "separator" },
                       {
                         key: "delete",
-                        label: "删除",
+                        label: t("Delete"),
                         icon: <TrashIcon />,
                         danger: true,
                         onSelect: () => setConfirmingDelete(svc),
                       },
                     ]}
                   >
-                    <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+                    <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
                       <MoreHorizontalIcon />
                     </Button>
                   </Dropdown>
@@ -208,10 +215,10 @@ export default function LLMServicesSection() {
         onOpenChange={(open) => {
           if (!open && !deleteMut.isPending) setConfirmingDelete(null);
         }}
-        title="确认删除 LLM 服务"
+        title={t("Delete LLM service?")}
         description={
           confirmingDelete
-            ? `服务 “${confirmingDelete.name}” 及其下属模型将被删除，操作不可撤销。`
+            ? t("“{0}” and its models will be permanently deleted.", confirmingDelete.name)
             : undefined
         }
         size="sm"
@@ -222,7 +229,7 @@ export default function LLMServicesSection() {
               onClick={() => setConfirmingDelete(null)}
               disabled={deleteMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -231,7 +238,7 @@ export default function LLMServicesSection() {
                 if (confirmingDelete) deleteMut.mutate(confirmingDelete.id);
               }}
             >
-              {deleteMut.isPending ? "删除中…" : "确认删除"}
+              {deleteMut.isPending ? t("Deleting…") : t("Confirm deletion")}
             </Button>
           </>
         }

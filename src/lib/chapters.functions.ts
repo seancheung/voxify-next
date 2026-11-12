@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm
 import { z } from "zod";
 import { db } from "@/db";
 import { chapters, files, projects, segments, ttsGenerations } from "@/db/schema";
+import { t } from "@/i18n";
 import type { ProjectSettings } from "@/types/project";
 
 export type ProjectDetail = {
@@ -108,7 +109,11 @@ export const listChapters = createServerFn({ method: "GET" })
 
 export const createChapterSchema = z.object({
   projectId: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入章节名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a chapter name") })
+    .max(120),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
@@ -150,7 +155,11 @@ export const createChapter = createServerFn({ method: "POST" })
 
 export const updateChapterSchema = z.object({
   id: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入章节名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a chapter name") })
+    .max(120),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
@@ -202,7 +211,7 @@ export const duplicateChapter = createServerFn({ method: "POST" })
         .from(chapters)
         .where(and(eq(chapters.id, data.id), isNull(chapters.deletedAt)))
         .all();
-      if (!src) throw new Error("章节不存在");
+      if (!src) throw new Error(t("Chapter not found"));
 
       const [{ next }] = tx
         .select({
@@ -216,7 +225,7 @@ export const duplicateChapter = createServerFn({ method: "POST" })
         .insert(chapters)
         .values({
           projectId: src.projectId,
-          name: `${src.name} (副本)`,
+          name: t("{0} (copy)", src.name),
           description: src.description,
           content: src.content,
           voiceId: src.voiceId,
@@ -420,7 +429,7 @@ export const purgeChapter = createServerFn({ method: "POST" })
       .select({ id: chapters.id })
       .from(chapters)
       .where(and(eq(chapters.id, data.id), isNotNull(chapters.deletedAt)));
-    if (!chapter) throw new Error("章节不存在或未被删除");
+    if (!chapter) throw new Error(t("Chapter not found in the recycle bin"));
 
     const segmentRows = await db
       .select({ id: segments.id })

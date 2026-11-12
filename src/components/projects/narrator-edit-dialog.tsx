@@ -7,11 +7,16 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import Textarea from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import { createNarrator, type NarratorListItem, updateNarrator } from "@/lib/narrators.functions";
 import type { CustomArgs } from "@/types/tts";
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "请输入角色名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a character name") })
+    .max(120),
   speed: z.string().trim().max(40).optional().or(z.literal("")),
   instructions: z.string().trim().max(2000).optional().or(z.literal("")),
 });
@@ -63,7 +68,7 @@ export default function NarratorEditDialog({
       const instructions = (value.instructions ?? "").trim();
       const parsed = parseCustomArgs(customArgsText);
       if (!parsed.ok) {
-        throw new Error("自定义参数不是合法的 JSON 对象");
+        throw new Error(t("Custom parameters must be a valid JSON object"));
       }
       const customArgs = parsed.value;
       const voiceSettings =
@@ -100,7 +105,7 @@ export default function NarratorEditDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEditing ? "保存失败" : "创建失败",
+        title: isEditing ? t("Save failed") : t("Creation failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -134,16 +139,18 @@ export default function NarratorEditDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEditing ? "编辑角色" : "新建角色"}
-      description="角色为项目级别，跨章节共享。同一项目内角色名称需唯一。"
+      title={isEditing ? t("Edit character") : t("New character")}
+      description={t(
+        "Characters are shared across chapters. Each name must be unique within the project.",
+      )}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : "保存"}
+            {submitting ? t("Saving…") : t("Save")}
           </Button>
         </>
       }
@@ -152,29 +159,35 @@ export default function NarratorEditDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="角色名称">
-                <field.InputField placeholder="例如：旁白、Alice" />
+              <field.FormField label={t("Character name")}>
+                <field.InputField placeholder={t("Example: Narrator, Alice")} />
               </field.FormField>
             )}
           </form.AppField>
           <div className="grid grid-cols-2 gap-4">
             <form.AppField name="speed">
               {(field) => (
-                <field.FormField label="语速" description="覆盖默认语速，例如 1.0、1.25">
-                  <field.InputField placeholder="留空使用默认" />
+                <field.FormField
+                  label={t("Speed")}
+                  description={t("Override the default speed, e.g. 1.0 or 1.25")}
+                >
+                  <field.InputField placeholder={t("Leave blank to use the default")} />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="instructions">
               {(field) => (
-                <field.FormField label="指令" description="部分服务支持的语气/情感描述">
-                  <field.InputField placeholder="留空使用默认" />
+                <field.FormField
+                  label={t("Instructions")}
+                  description={t("Tone or emotion instructions for supported services")}
+                >
+                  <field.InputField placeholder={t("Leave blank to use the default")} />
                 </field.FormField>
               )}
             </form.AppField>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-content-200">自定义参数</label>
+            <label className="text-sm text-content-200">{t("Custom parameters")}</label>
             <Textarea
               value={customArgsText}
               onChange={(v) => {
@@ -184,16 +197,16 @@ export default function NarratorEditDialog({
                   setCustomArgsError("");
                 } else {
                   const result = parseCustomArgs(v);
-                  setCustomArgsError(result.ok ? "" : "请输入合法的 JSON 对象");
+                  setCustomArgsError(result.ok ? "" : t("Enter a valid JSON object"));
                 }
               }}
-              placeholder='例如：{"emotion": "happy", "language": "zh"}'
+              placeholder={t('Example: {"emotion": "happy", "language": "zh"}')}
               rows={3}
               className="w-full font-mono text-xs"
             />
             {customArgsError && <span className="text-xs text-error">{customArgsError}</span>}
             <span className="text-xs text-content-400">
-              JSON 格式，合成时将作为额外请求参数发送（优先级低于标准参数）
+              {t("Extra synthesis parameters in JSON. Standard parameters take precedence.")}
             </span>
           </div>
         </div>

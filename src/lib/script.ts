@@ -30,10 +30,7 @@ export function serializeSegments(
 }
 
 /**
- * 把脚本文本规范化为单行段落数组：
- * - 每行 trim 首尾空白
- * - 丢掉空行
- * - 丢掉只有角色标签没有正文的行（如 "[[张三]]"）
+ * Trim each line and ignore blank lines and speaker tags without text.
  */
 export function parseScriptText(input: string): ParsedSegmentLine[] {
   const lines = input.split(/\r?\n/);
@@ -55,8 +52,7 @@ export function parseScriptText(input: string): ParsedSegmentLine[] {
 }
 
 /**
- * 在 diff 之前对脚本文本做与 parseScriptText 相同的规范化，
- * 保证 diff 视图与最终保存内容一致。
+ * Use the same normalization for diffing and saving.
  */
 export function normalizeScriptText(input: string): string {
   return serializeSegments(parseScriptText(input));

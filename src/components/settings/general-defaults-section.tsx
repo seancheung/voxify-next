@@ -8,6 +8,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import type { SelectOption } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   appConfigSchema,
   DEFAULT_APP_CONFIG,
@@ -41,7 +42,7 @@ export default function GeneralDefaultsSection() {
     },
     onError: (err) =>
       toast.error({
-        title: "保存失败",
+        title: t("Save failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -67,11 +68,13 @@ export default function GeneralDefaultsSection() {
 
   return (
     <SectionCard
-      title="全局默认值"
-      description="新建项目和段落时使用的默认配置，可在项目内单独覆盖"
+      title={t("Global defaults")}
+      description={t(
+        "Default settings for new projects and segments. Override them in individual projects.",
+      )}
       actions={
         <Button variant="ghost" onClick={() => setResetOpen(true)} disabled={save.isPending}>
-          重置为默认值
+          {t("Reset to defaults")}
         </Button>
       }
     >
@@ -80,14 +83,14 @@ export default function GeneralDefaultsSection() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <form.AppField name="defaultLlmModelId">
               {(field) => (
-                <field.FormField label="默认 LLM 模型">
+                <field.FormField label={t("Default LLM model")}>
                   <field.ComboboxField options={llmOptions} className="w-full" clearable />
                 </field.FormField>
               )}
             </form.AppField>
             <form.AppField name="defaultPromptId">
               {(field) => (
-                <field.FormField label="默认提示词">
+                <field.FormField label={t("Default prompt")}>
                   <field.SelectField options={promptOptions} className="w-full" clearable />
                 </field.FormField>
               )}
@@ -95,8 +98,8 @@ export default function GeneralDefaultsSection() {
             <form.AppField name="defaultTtsTimeoutMs">
               {(field) => (
                 <field.FormField
-                  label="TTS 请求超时"
-                  description="单次合成请求最长等待时间（毫秒）"
+                  label={t("TTS request timeout")}
+                  description={t("Maximum time for one synthesis request (milliseconds)")}
                 >
                   <field.NumberField
                     min={1000}
@@ -111,8 +114,8 @@ export default function GeneralDefaultsSection() {
             <form.AppField name="defaultLlmTimeoutMs">
               {(field) => (
                 <field.FormField
-                  label="LLM 请求超时"
-                  description="单次推理请求最长等待时间（毫秒）"
+                  label={t("LLM request timeout")}
+                  description={t("Maximum time for one inference request (milliseconds)")}
                 >
                   <field.NumberField
                     min={1000}
@@ -126,7 +129,10 @@ export default function GeneralDefaultsSection() {
             </form.AppField>
             <form.AppField name="defaultSegmentGapMs">
               {(field) => (
-                <field.FormField label="段落默认间隔" description="毫秒，0 表示不插入静音">
+                <field.FormField
+                  label={t("Default segment gap")}
+                  description={t("Milliseconds. Set to 0 for no silence.")}
+                >
                   <field.NumberField min={0} max={60_000} step={50} integer className="w-full" />
                 </field.FormField>
               )}
@@ -134,8 +140,8 @@ export default function GeneralDefaultsSection() {
             <form.AppField name="defaultChapterGapMs">
               {(field) => (
                 <field.FormField
-                  label="章节间隔"
-                  description="毫秒，多章节合并导出时章节之间插入的静音"
+                  label={t("Chapter gap")}
+                  description={t("Silence between chapters in a merged export, in milliseconds")}
                 >
                   <field.NumberField min={0} max={600_000} step={100} integer className="w-full" />
                 </field.FormField>
@@ -149,12 +155,12 @@ export default function GeneralDefaultsSection() {
         onOpenChange={setResetOpen}
         closable={!save.isPending}
         size="sm"
-        title="重置全局默认值？"
-        description="当前全局设置将恢复为应用的初始默认值。"
+        title={t("Reset global defaults?")}
+        description={t("Restore the original application defaults.")}
         footer={
           <>
             <Button variant="ghost" disabled={save.isPending} onClick={() => setResetOpen(false)}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               disabled={save.isPending}
@@ -162,7 +168,7 @@ export default function GeneralDefaultsSection() {
                 save.mutate(DEFAULT_APP_CONFIG, { onSuccess: () => setResetOpen(false) })
               }
             >
-              {save.isPending ? "保存中…" : "确认重置"}
+              {save.isPending ? t("Saving…") : t("Confirm reset")}
             </Button>
           </>
         }

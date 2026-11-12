@@ -8,6 +8,7 @@ import Dialog from "@/components/ui/dialog";
 import Radio, { RadioGroup } from "@/components/ui/radio";
 import { toast } from "@/components/ui/toast";
 import { usePreviewPlayer } from "@/hooks/use-preview-player";
+import { t } from "@/i18n";
 import {
   getSegmentGenerationUrl,
   listSegmentGenerations,
@@ -48,7 +49,7 @@ export default function SegmentHistoryDialog({
     },
     onError: (err) =>
       toast.error({
-        title: "切换失败",
+        title: t("Switch failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -82,16 +83,16 @@ export default function SegmentHistoryDialog({
         if (!next) player.stop();
         onOpenChange(next);
       }}
-      title="切换历史音频"
-      description="选择一条历史生成结果作为当前段落的音频"
+      title={t("Switch audio version")}
+      description={t("Choose a previous generation for this segment")}
       size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={handleClose} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button onClick={handleConfirm} disabled={!canConfirm}>
-            {submitting ? "切换中…" : "确认"}
+            {submitting ? t("Switching…") : t("Confirm")}
           </Button>
         </>
       }
@@ -102,7 +103,7 @@ export default function SegmentHistoryDialog({
         </div>
       ) : rows.length === 0 ? (
         <div className="flex h-40 items-center justify-center text-sm text-content-400">
-          暂无历史音频
+          {t("No previous audio versions")}
         </div>
       ) : (
         <RadioGroup<number>
@@ -133,7 +134,7 @@ export default function SegmentHistoryDialog({
                       </span>
                       {row.editedFromGenerationId != null && (
                         <Badge size="sm" variant="info">
-                          编辑版
+                          {t("Edited version")}
                         </Badge>
                       )}
                     </div>
@@ -155,7 +156,7 @@ export default function SegmentHistoryDialog({
                       return r.url;
                     })
                   }
-                  aria-label={isPlaying ? "停止" : "试听"}
+                  aria-label={isPlaying ? t("Stop") : t("Preview")}
                   disabled={isLoadingAudio}
                 >
                   {isLoadingAudio ? (

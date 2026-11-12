@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import Skeleton from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   clearCompletedQueueJobs,
   getQueuesStatus,
@@ -18,9 +19,15 @@ import {
 import { getGlobalStats } from "@/lib/projects.functions";
 
 const queueLabels: Record<QueueKey, string> = {
-  tts: "语音合成",
-  "design-voice": "声音设计",
-  export: "项目导出",
+  get tts() {
+    return t("Speech synthesis");
+  },
+  get "design-voice"() {
+    return t("Voice design");
+  },
+  get export() {
+    return t("Project exports");
+  },
 };
 
 export default function GeneralStatsSection() {
@@ -30,16 +37,20 @@ export default function GeneralStatsSection() {
     queryFn: () => fetchStats(),
   });
   return (
-    <SectionCard title="统计信息" description="项目与音频资源的整体使用情况">
+    <SectionCard title={t("Statistics")} description={t("Usage across projects and audio assets")}>
       <div className="grid gap-3 md:grid-cols-2">
         <StatCard
-          label="项目数量"
+          label={t("Projects")}
           value={stats ? `${stats.projects.total}` : null}
-          sub={stats && stats.projects.deleted > 0 ? `已删除 ${stats.projects.deleted}` : undefined}
+          sub={
+            stats && stats.projects.deleted > 0
+              ? t("Deleted {0}", stats.projects.deleted)
+              : undefined
+          }
           icon={<FolderIcon />}
         />
         <StatCard
-          label="文件数量"
+          label={t("Files")}
           value={stats ? `${stats.files.count}` : null}
           sub={stats ? formatBytes(stats.files.size) : undefined}
           icon={<FileIcon />}
@@ -57,11 +68,11 @@ export function TaskManagementSection() {
     mutationFn: () => clearJobs(),
     onSuccess: ({ count }) => {
       setConfirmOpen(false);
-      toast.success(count ? `已清空 ${count} 条已完成任务` : "无已完成任务");
+      toast.success(count ? t("Cleared {0} completed tasks", count) : t("No completed tasks"));
       qc.invalidateQueries({ queryKey: ["queues-status"] });
       qc.invalidateQueries({ queryKey: ["design-jobs"] });
     },
-    onError: (err) => toast.error({ title: "清空失败", description: err.message }),
+    onError: (err) => toast.error({ title: t("Failed to clear tasks"), description: err.message }),
   });
   const fetchQueues = useServerFn(getQueuesStatus);
   const { data: queues } = useQuery({
@@ -71,10 +82,10 @@ export function TaskManagementSection() {
   });
   return (
     <SectionCard
-      title="任务管理"
+      title={t("Task management")}
       actions={
         <Button variant="ghost" onClick={() => setConfirmOpen(true)}>
-          清空已完成
+          {t("Clear completed")}
         </Button>
       }
     >
@@ -88,8 +99,10 @@ export function TaskManagementSection() {
         onOpenChange={setConfirmOpen}
         closable={!clear.isPending}
         size="sm"
-        title="清空已完成任务？"
-        description="将清空语音合成、声音设计和项目导出队列中的已完成任务记录。生成的音频和导出文件会保留。"
+        title={t("Clear completed tasks?")}
+        description={t(
+          "Remove completed speech synthesis, voice design and export task records. Generated audio and exported files are kept.",
+        )}
         footer={
           <>
             <Button
@@ -97,10 +110,10 @@ export function TaskManagementSection() {
               disabled={clear.isPending}
               onClick={() => setConfirmOpen(false)}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button disabled={clear.isPending} onClick={() => clear.mutate()}>
-              {clear.isPending ? "清空中…" : "确认清空"}
+              {clear.isPending ? t("Clearing…") : t("Confirm clear")}
             </Button>
           </>
         }
@@ -112,23 +125,23 @@ export function TaskManagementSection() {
 function QueueCard({ queue, status }: { queue: QueueKey; status: QueueStatus | null }) {
   const qc = useQueryClient();
   const setPaused = useServerFn(setQueuePaused);
-  const label = `${queueLabels[queue]}任务队列`;
+  const label = t("{0} queue", queueLabels[queue]);
   const pauseMut = useMutation({
     mutationFn: (paused: boolean) => setPaused({ data: { queue, paused } }),
     onSuccess: ({ paused }) => {
-      toast.success(`已${paused ? "暂停" : "恢复"}${label}`);
+      toast.success(paused ? t("Paused {0}", label) : t("Resumed {0}", label));
       return qc.invalidateQueries({ queryKey: ["queues-status"] });
     },
-    onError: (err) => toast.error({ title: "操作失败", description: err.message }),
+    onError: (err) => toast.error({ title: t("Operation failed"), description: err.message }),
   });
   const value = !status
     ? null
     : status.paused
-      ? "已暂停"
+      ? t("Paused")
       : status.running > 0
-        ? `运行中 · ${status.running}`
-        : "空闲";
-  const sub = status && status.failed > 0 ? `失败 ${status.failed}` : undefined;
+        ? t("Running · {0}", status.running)
+        : t("Idle");
+  const sub = status && status.failed > 0 ? t("Failed: {0}", status.failed) : undefined;
 
   return (
     <StatCard
@@ -149,7 +162,7 @@ function QueueCard({ queue, status }: { queue: QueueKey; status: QueueStatus | n
           ) : (
             <PauseIcon />
           )}
-          {status?.paused ? "恢复" : "暂停"}
+          {status?.paused ? t("Restore") : t("Pause")}
         </Button>
       }
     />

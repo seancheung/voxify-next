@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { files, ttsServices, type VoiceDesignStatus, voiceDesigns } from "@/db/schema";
+import { t } from "@/i18n";
 
 export type VoiceDesignListItem = {
   id: number;
@@ -123,19 +124,31 @@ export const listVoiceDesigns = createServerFn({ method: "GET" })
   });
 
 export const createVoiceDesignSchema = z.object({
-  ttsServiceId: z.number().int().positive("请选择 TTS 服务"),
-  name: z.string().trim().min(1, "请输入名称").max(120),
-  instruct: z.string().trim().min(1, "请输入声音描述").max(1000),
-  input: z.string().trim().min(1, "请输入合成文本").max(8000),
+  ttsServiceId: z.number().int().positive(t("Select a TTS service")),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a name") })
+    .max(120),
+  instruct: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a voice description") })
+    .max(1000),
+  input: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter sample text") })
+    .max(8000),
 });
 
 export const createVoiceDesign = createServerFn({ method: "POST" })
   .validator((data: z.input<typeof createVoiceDesignSchema>) => createVoiceDesignSchema.parse(data))
   .handler(async ({ data }): Promise<VoiceDesignListItem> => {
     const [svc] = await db.select().from(ttsServices).where(eq(ttsServices.id, data.ttsServiceId));
-    if (!svc) throw new Error("TTS 服务不存在");
+    if (!svc) throw new Error(t("TTS service not found"));
     if (!svc.capabilities?.design) {
-      throw new Error("当前 TTS 服务不支持声音设计");
+      throw new Error(t("This TTS service does not support voice design"));
     }
 
     const now = new Date();
@@ -188,7 +201,11 @@ export const createVoiceDesign = createServerFn({ method: "POST" })
 
 const renameSchema = z.object({
   id: z.number().int().positive(),
-  name: z.string().trim().min(1, "请输入名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a name") })
+    .max(120),
 });
 
 export const renameVoiceDesignSchema = renameSchema;
@@ -233,7 +250,7 @@ export const getVoiceDesignPreviewUrl = createServerFn({ method: "GET" })
       .from(voiceDesigns)
       .innerJoin(files, eq(files.id, voiceDesigns.fileId))
       .where(eq(voiceDesigns.id, data.id));
-    if (!row) throw new Error("声音文件不存在");
+    if (!row) throw new Error(t("Voice file not found"));
     const { fileDownloadUrl } = await import("@/lib/files.server");
     const url = await fileDownloadUrl(row);
     return { url };
@@ -253,7 +270,7 @@ export const getVoiceDesignDownloadInfo = createServerFn({ method: "GET" })
       .from(voiceDesigns)
       .innerJoin(files, eq(files.id, voiceDesigns.fileId))
       .where(eq(voiceDesigns.id, data.id));
-    if (!row) throw new Error("声音文件不存在");
+    if (!row) throw new Error(t("Voice file not found"));
     const { fileDownloadUrl } = await import("@/lib/files.server");
     const ext = mime.getExtension(row.fileMime) ?? "bin";
     // No `asAttachment` — the client fetches the bytes and re-wraps them

@@ -1,4 +1,5 @@
 import { PlusIcon } from "lucide-react";
+import { t } from "@/i18n";
 import Button from "../ui/button";
 
 export default function ProjectsEmptyState({
@@ -11,16 +12,16 @@ export default function ProjectsEmptyState({
   if (hasFilters) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-20 text-content-400">
-        <p className="text-sm">没有匹配的项目</p>
+        <p className="text-sm">{t("No matching projects")}</p>
       </div>
     );
   }
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20 text-content-400">
-      <p className="text-sm">还没有项目，开始创建第一个吧</p>
+      <p className="text-sm">{t("Create your first project to get started")}</p>
       <Button onClick={onCreate}>
         <PlusIcon />
-        新建项目
+        {t("New project")}
       </Button>
     </div>
   );

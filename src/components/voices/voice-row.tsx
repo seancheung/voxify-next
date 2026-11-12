@@ -11,6 +11,7 @@ import Button from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import Switch from "@/components/ui/switch";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { t } from "@/i18n";
 import type { VoiceListItem } from "@/lib/voices.functions";
 import { TTSServiceType } from "@/types/tts";
 import { cn } from "@/utils/cn";
@@ -65,7 +66,7 @@ export default function VoiceRow({
             shape="circle"
             onClick={onTogglePlay}
             disabled={!voice.previewUrl || isLoadingAudio}
-            aria-label={isPlaying ? "停止" : "试听"}
+            aria-label={isPlaying ? t("Stop") : t("Preview")}
           >
             {isLoadingAudio ? (
               <Loader2Icon className="animate-spin" />
@@ -79,14 +80,14 @@ export default function VoiceRow({
             size="sm"
             value={voice.enabled ?? false}
             onChange={onToggleEnabled}
-            aria-label={voice.enabled ? "禁用" : "启用"}
+            aria-label={voice.enabled ? t("Disable") : t("Enable")}
           />
           <Dropdown
             align="end"
             items={[
               {
                 key: "edit",
-                label: "编辑",
+                label: t("Edit"),
                 icon: <PencilIcon />,
                 disabled: !isOpenAI,
                 onSelect: onEdit,
@@ -94,7 +95,7 @@ export default function VoiceRow({
               { type: "separator" },
               {
                 key: "delete",
-                label: "删除",
+                label: t("Delete"),
                 icon: <TrashIcon />,
                 danger: true,
                 disabled: !isOpenAI,
@@ -102,7 +103,7 @@ export default function VoiceRow({
               },
             ]}
           >
-            <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+            <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
               <MoreHorizontalIcon />
             </Button>
           </Dropdown>

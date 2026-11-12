@@ -7,6 +7,7 @@ import TasksDrawer from "@/components/tasks-drawer";
 import Button from "@/components/ui/button";
 import Tooltip from "@/components/ui/tooltip";
 import VoxifyLogo from "@/components/voxify-logo";
+import { t } from "@/i18n";
 import { getExportJobsSummary } from "@/lib/export.functions";
 import { getTTSJobsSummary } from "@/lib/mq.functions";
 import { getDesignJobsSummary } from "@/lib/voice-designs.functions";
@@ -53,7 +54,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const hasRunning = summaries.some((query) => query.data?.hasRunning);
   const hasFailed = summaries.some((query) => query.data?.hasFailed);
 
-  const tooltip = hasRunning ? "后台任务（进行中）" : hasFailed ? "后台任务（有失败）" : "后台任务";
+  const tooltip = hasRunning
+    ? t("Background tasks (running)")
+    : hasFailed
+      ? t("Background tasks (failed)")
+      : t("Background tasks");
 
   return (
     <div className="flex h-screen min-h-0 flex-col">
@@ -75,16 +80,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
             )}
           </div>
           <nav className="flex items-center gap-1">
-            <Tooltip content="语音库">
+            <Tooltip content={t("Voice library")}>
               <Button variant="ghost" size="lg" shape="square" asChild>
-                <Link to="/voices" aria-label="语音库" activeProps={{ className: activeLinkClass }}>
+                <Link
+                  to="/voices"
+                  aria-label={t("Voice library")}
+                  activeProps={{ className: activeLinkClass }}
+                >
                   <MicIcon />
                 </Link>
               </Button>
             </Tooltip>
-            <Tooltip content="设置">
+            <Tooltip content={t("Settings")}>
               <Button variant="ghost" size="lg" shape="square" asChild>
-                <Link to="/settings" aria-label="设置" activeProps={{ className: activeLinkClass }}>
+                <Link
+                  to="/settings"
+                  aria-label={t("Settings")}
+                  activeProps={{ className: activeLinkClass }}
+                >
                   <SettingsIcon />
                 </Link>
               </Button>
@@ -95,7 +108,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   variant="ghost"
                   size="lg"
                   shape="square"
-                  aria-label="后台任务"
+                  aria-label={t("Background tasks")}
                   onClick={() => setTasksOpen(true)}
                 >
                   <ListChecksIcon />

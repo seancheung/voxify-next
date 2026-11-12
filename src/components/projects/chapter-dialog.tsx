@@ -6,10 +6,15 @@ import { useAppForm } from "@/components/form";
 import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import { type ChapterListItem, createChapter, updateChapter } from "@/lib/chapters.functions";
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "请输入章节名称").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t("Enter a chapter name") })
+    .max(120),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
@@ -49,7 +54,7 @@ export default function ChapterDialog({
     },
     onError: (err) => {
       toast.error({
-        title: "创建失败",
+        title: t("Creation failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     },
@@ -64,7 +69,7 @@ export default function ChapterDialog({
     },
     onError: (err) => {
       toast.error({
-        title: "更新失败",
+        title: t("Update failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     },
@@ -119,16 +124,22 @@ export default function ChapterDialog({
     <Dialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={isEdit ? "编辑章节" : "新建章节"}
-      description={isEdit ? "修改章节的基本信息" : "添加一个新章节到项目中"}
+      title={isEdit ? t("Edit chapter") : t("New chapter")}
+      description={isEdit ? t("Edit chapter details") : t("Add a chapter to this project")}
       size="md"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? (isEdit ? "保存中…" : "创建中…") : isEdit ? "保存" : "创建"}
+            {submitting
+              ? isEdit
+                ? t("Saving…")
+                : t("Creating…")
+              : isEdit
+                ? t("Save")
+                : t("Create")}
           </Button>
         </>
       }
@@ -137,16 +148,16 @@ export default function ChapterDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
-                <field.InputField placeholder="例如：第一章" autoFocus />
+              <field.FormField label={t("Name")}>
+                <field.InputField placeholder={t("Example: Chapter One")} autoFocus />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="description">
             {(field) => (
-              <field.FormField label="描述">
+              <field.FormField label={t("Description")}>
                 <field.TextareaField
-                  placeholder="可选，简要介绍这一章节"
+                  placeholder={t("Optional chapter summary")}
                   rows={4}
                   className="w-full"
                 />

@@ -33,6 +33,7 @@ import { toast } from "@/components/ui/toast";
 import Tooltip from "@/components/ui/tooltip";
 import { usePreviewPlayer } from "@/hooks/use-preview-player";
 import { useTTSSegmentStates } from "@/hooks/use-tts-segment-states";
+import { t } from "@/i18n";
 import { type ChapterListItem, getProject } from "@/lib/chapters.functions";
 import { getAppConfig } from "@/lib/configs.functions";
 import { listNarrators } from "@/lib/narrators.functions";
@@ -56,12 +57,24 @@ type SegmentStatus = "queued" | "generating" | "failed" | "done" | "stale" | "no
 type SegmentLiveState = "active" | "pending" | "failed" | null;
 
 const STATUS_LABEL: Record<SegmentStatus, string> = {
-  queued: "队列中",
-  generating: "生成中",
-  failed: "已失败",
-  done: "已生成",
-  stale: "有更新",
-  "not-generated": "未生成",
+  get queued() {
+    return t("Queued");
+  },
+  get generating() {
+    return t("Generating");
+  },
+  get failed() {
+    return t("Failed");
+  },
+  get done() {
+    return t("Generated");
+  },
+  get stale() {
+    return t("Updated");
+  },
+  get "not-generated"() {
+    return t("Not generated");
+  },
 };
 
 const STATUS_VARIANT: Record<
@@ -77,13 +90,48 @@ const STATUS_VARIANT: Record<
 };
 
 const STATUS_FILTER_OPTIONS: SelectOption<SegmentStatus | "all">[] = [
-  { value: "all", label: "全部状态" },
-  { value: "queued", label: STATUS_LABEL.queued },
-  { value: "generating", label: STATUS_LABEL.generating },
-  { value: "failed", label: STATUS_LABEL.failed },
-  { value: "done", label: STATUS_LABEL.done },
-  { value: "stale", label: STATUS_LABEL.stale },
-  { value: "not-generated", label: STATUS_LABEL["not-generated"] },
+  {
+    value: "all",
+    get label() {
+      return t("All statuses");
+    },
+  },
+  {
+    value: "queued",
+    get label() {
+      return STATUS_LABEL.queued;
+    },
+  },
+  {
+    value: "generating",
+    get label() {
+      return STATUS_LABEL.generating;
+    },
+  },
+  {
+    value: "failed",
+    get label() {
+      return STATUS_LABEL.failed;
+    },
+  },
+  {
+    value: "done",
+    get label() {
+      return STATUS_LABEL.done;
+    },
+  },
+  {
+    value: "stale",
+    get label() {
+      return STATUS_LABEL.stale;
+    },
+  },
+  {
+    value: "not-generated",
+    get label() {
+      return STATUS_LABEL["not-generated"];
+    },
+  },
 ];
 
 const ROW_HEIGHT = 52;
@@ -177,7 +225,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
     if (!segment.generationId) return;
     fetchGenerationInfo({ data: { id: segment.generationId } }).then(setGenerationInfo, (err) =>
       toast.error({
-        title: "获取信息失败",
+        title: t("Failed to load details"),
         description: err instanceof Error ? err.message : String(err),
       }),
     );
@@ -276,20 +324,20 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       qc.invalidateQueries({ queryKey: ["segments", chapter.id] });
       qc.invalidateQueries({ queryKey: ["tts-jobs-summary"] });
       // Single-segment enqueues come from the per-row regen button; the row's
-      // own status badge updates to "队列中" immediately so a toast is noise.
+      // own status badge updates to "Queued" immediately so a toast is noise.
       // Only surface the toast for batch enqueues.
       if (variables.length <= 1) return;
       if (enqueued > 0) {
         toast.success(
           skipped > 0
-            ? `已加入 ${enqueued} 条，跳过 ${skipped} 条已在队列中的段落`
-            : `已加入 ${enqueued} 条`,
+            ? t("Queued {0} segments and skipped {1} already in the queue", enqueued, skipped)
+            : t("Queued {0} segments", enqueued),
         );
       }
     },
     onError: (err) => {
       toast.error({
-        title: "加入队列失败",
+        title: t("Failed to enqueue"),
         description: err instanceof Error ? err.message : String(err),
       });
       console.error(err);
@@ -302,11 +350,11 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       qc.invalidateQueries({ queryKey: ["segments", chapter.id] });
       // staleCount feeds the chapter list status icon.
       qc.invalidateQueries({ queryKey: ["chapters", chapter.projectId] });
-      toast.success("已标记过期");
+      toast.success(t("Marked as stale"));
     },
     onError: (err) =>
       toast.error({
-        title: "操作失败",
+        title: t("Operation failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -320,11 +368,11 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       // mark every affected segment stale.
       qc.invalidateQueries({ queryKey: ["chapters", chapter.projectId] });
       qc.invalidateQueries({ queryKey: ["narrators", chapter.projectId] });
-      toast.success(`已更新 ${updated} 个段落的角色`);
+      toast.success(t("Updated the character for {0} segments", updated));
     },
     onError: (err) =>
       toast.error({
-        title: "设置角色失败",
+        title: t("Failed to set character"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -390,7 +438,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
   const chainTimerRef = useRef<number | null>(null);
   // True while we're sitting in the inter-segment gap during continuous play —
   // the previous Howl has ended (so player.playingId is null) but the next
-  // one hasn't started yet. Used to keep the "停止播放" button visible across
+  // one hasn't started yet. Used to keep the "Stop playback" button visible across
   // the gap so it doesn't flicker.
   const [chainPending, setChainPending] = useState(false);
 
@@ -475,7 +523,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       const sources = await Promise.all(
         entries.map(async (e) => {
           const resp = await fetch(e.url);
-          if (!resp.ok) throw new Error(`下载失败：${e.fileName}`);
+          if (!resp.ok) throw new Error(t("Download failed: {0}", e.fileName));
           return { name: e.fileName, input: resp };
         }),
       );
@@ -490,7 +538,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (err) {
       toast.error({
-        title: "批量下载失败",
+        title: t("Batch download failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -507,7 +555,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       window.location.assign(r.url);
     } catch (err) {
       toast.error({
-        title: "下载失败",
+        title: t("Download failed"),
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -524,17 +572,17 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
   });
 
   const narratorOptions: SelectOption<number>[] = [
-    { value: NARRATOR_FILTER_ALL, label: "全部角色" },
-    { value: NARRATOR_FILTER_NONE, label: "默认" },
+    { value: NARRATOR_FILTER_ALL, label: t("All characters") },
+    { value: NARRATOR_FILTER_NONE, label: t("Default") },
     ...narratorList.map((n) => ({ value: n.id, label: n.name })),
   ];
 
-  const generateLabel = selected.size > 0 ? "生成所选" : "生成全部";
+  const generateLabel = selected.size > 0 ? t("Generate selected") : t("Generate all");
 
   const narratorMenuItems: DropdownItem[] = [
     {
       key: "default",
-      label: "默认（无角色）",
+      label: t("Default (no character)"),
       onSelect: () => handleSetNarrator(null),
     },
   ];
@@ -556,27 +604,31 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
           <ZapIcon />
           {generateLabel}
         </Button>
-        <Tooltip content="勾选后，已生成的段落也会被加入队列">
+        <Tooltip content={t("Include previously generated segments in the queue")}>
           <Checkbox
             value={rerun}
             onChange={setRerun}
-            label="重新生成"
+            label={t("Regenerate")}
             className="text-sm text-content-300"
           />
         </Tooltip>
         <div className="h-5 w-px bg-content-400/15" />
-        <Tooltip content="勾选后，从点击的段落开始按列表顺序连播已生成的段落，每段间隔使用项目设置（未设置则用全局默认）">
+        <Tooltip
+          content={t(
+            "Play generated segments in order from the selected segment, using project or global gap settings.",
+          )}
+        >
           <Checkbox
             value={continuous}
             onChange={setContinuous}
-            label="连续播放"
+            label={t("Continuous playback")}
             className="text-sm text-content-300"
           />
         </Tooltip>
         {(player.playingId || chainPending) && (
           <Button variant="ghost" onClick={handleStopPlayback}>
             <SquareIcon />
-            停止播放
+            {t("Stop playback")}
           </Button>
         )}
         <div className="ml-auto flex items-center gap-2">
@@ -598,13 +650,11 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
 
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-content-400/15 bg-base-200 px-3 py-2">
-          <span className="text-sm text-content-300">
-            已选 <span className="font-medium text-content-100">{selected.size}</span> 项
-          </span>
+          <span className="text-sm text-content-300">{t("{0} selected", selected.size)}</span>
           <div className="h-5 w-px bg-content-400/15" />
           <Button variant="ghost" size="sm" onClick={handleClearSelection}>
             <XIcon />
-            取消选择
+            {t("Clear selection")}
           </Button>
           <Button
             variant="ghost"
@@ -613,12 +663,12 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
             disabled={downloadingBatch}
           >
             {downloadingBatch ? <Loader2Icon className="animate-spin" /> : <DownloadIcon />}
-            {downloadingBatch ? "打包中…" : "下载"}
+            {downloadingBatch ? t("Packaging…") : t("Download")}
           </Button>
           <Dropdown align="start" items={narratorMenuItems}>
             <Button variant="ghost" size="sm" disabled={setNarratorsMut.isPending}>
               <UsersIcon />
-              设置角色
+              {t("Set character")}
             </Button>
           </Dropdown>
         </div>
@@ -626,7 +676,9 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
 
       {filteredSegments.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-content-400/20 bg-base-200 text-sm text-content-400">
-          {segments.length === 0 ? "本章节还没有段落" : "没有匹配的段落"}
+          {segments.length === 0
+            ? t("This chapter has no segments yet")
+            : t("No matching segments")}
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-content-400/20 bg-base-200">
@@ -637,13 +689,17 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
             )}
           >
             <div className="flex items-center">
-              <Checkbox value={allFilteredSelected} onChange={toggleSelectAll} aria-label="全选" />
+              <Checkbox
+                value={allFilteredSelected}
+                onChange={toggleSelectAll}
+                aria-label={t("Select all")}
+              />
             </div>
-            <div>编号</div>
-            <div>角色</div>
-            <div>文本</div>
-            <div>状态</div>
-            <div>操作</div>
+            <div>{t("Number")}</div>
+            <div>{t("Character")}</div>
+            <div>{t("Text")}</div>
+            <div>{t("Status")}</div>
+            <div>{t("Actions")}</div>
           </div>
           <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
             <div
@@ -784,11 +840,11 @@ function SegmentRow({
   onViewInfo: () => void;
   style?: React.CSSProperties;
 }) {
-  const displayName = narratorName ?? "默认";
+  const displayName = narratorName ?? t("Default");
   const text = (segment.content ?? "").trim();
   const hasGeneration = segment.generationId != null;
   const regenIcon = hasGeneration ? <RefreshCwIcon /> : <ZapIcon />;
-  const regenLabel = hasGeneration ? "重新生成" : "生成";
+  const regenLabel = hasGeneration ? t("Regenerate") : t("Generate");
   const canSwitchHistory = segment.generationCount >= 2;
 
   // Captured during click on the underlying input so onChange can forward the
@@ -811,7 +867,7 @@ function SegmentRow({
             shiftKeyAtClickRef.current = e.shiftKey;
           }}
           onChange={(next) => onToggleSelect(next, shiftKeyAtClickRef.current)}
-          aria-label={`选择段落 ${indexLabel}`}
+          aria-label={t("Select segment {0}", indexLabel)}
         />
       </div>
       <div className="font-mono text-xs text-content-300">{indexLabel}</div>
@@ -823,7 +879,7 @@ function SegmentRow({
       </span>
       <div className="flex min-w-0 items-center gap-1.5">
         {segment.leadingSilence !== null && (
-          <Tooltip content={`前置留白 ${formatDuration(segment.leadingSilence)}`}>
+          <Tooltip content={t("Leading silence {0}", formatDuration(segment.leadingSilence))}>
             <ClockIcon className="size-3.5 shrink-0 text-info" />
           </Tooltip>
         )}
@@ -831,10 +887,10 @@ function SegmentRow({
           className={cn("min-w-0 truncate", isPlaying && "animate-pulse text-primary-500")}
           title={text}
         >
-          {text || <span className="text-content-400">（空）</span>}
+          {text || <span className="text-content-400">{t("(empty)")}</span>}
         </span>
         {segment.trailingSilence !== null && (
-          <Tooltip content={`后置留白 ${formatDuration(segment.trailingSilence)}`}>
+          <Tooltip content={t("Trailing silence {0}", formatDuration(segment.trailingSilence))}>
             <ClockIcon className="size-3.5 shrink-0 text-info" />
           </Tooltip>
         )}
@@ -851,7 +907,7 @@ function SegmentRow({
           shape="circle"
           onClick={onTogglePlay}
           disabled={!canPlay || isLoadingAudio}
-          aria-label={isPlaying ? "停止" : "播放"}
+          aria-label={isPlaying ? t("Stop") : t("Play")}
           className={cn(isPlaying && "animate-pulse")}
         >
           {isLoadingAudio ? (
@@ -874,14 +930,14 @@ function SegmentRow({
             {regenIcon}
           </Button>
         </Tooltip>
-        <Tooltip content="切换历史">
+        <Tooltip content={t("Switch version")}>
           <Button
             variant="ghost"
             size="sm"
             shape="circle"
             onClick={onSwitchHistory}
             disabled={!canSwitchHistory}
-            aria-label="切换"
+            aria-label={t("Switch")}
           >
             <HistoryIcon />
           </Button>
@@ -891,27 +947,27 @@ function SegmentRow({
           items={[
             {
               key: "edit",
-              label: "编辑",
+              label: t("Edit"),
               icon: <PencilIcon />,
               onSelect: onEdit,
             },
             {
               key: "edit-audio",
-              label: "编辑音频",
+              label: t("Edit audio"),
               icon: <AudioLinesIcon />,
               disabled: !hasGeneration,
               onSelect: onEditAudio,
             },
             {
               key: "download",
-              label: "下载",
+              label: t("Download"),
               icon: <DownloadIcon />,
               disabled: !hasGeneration,
               onSelect: onDownload,
             },
             {
               key: "mark",
-              label: "标记过期",
+              label: t("Mark as stale"),
               icon: <FlagIcon />,
               disabled: !hasGeneration || segment.isStale,
               onSelect: onMarkStale,
@@ -919,14 +975,14 @@ function SegmentRow({
             { type: "separator" },
             {
               key: "info",
-              label: "查看信息",
+              label: t("View details"),
               icon: <InfoIcon />,
               disabled: !hasGeneration,
               onSelect: onViewInfo,
             },
           ]}
         >
-          <Button variant="ghost" size="sm" shape="circle" aria-label="更多操作">
+          <Button variant="ghost" size="sm" shape="circle" aria-label={t("More actions")}>
             <MoreHorizontalIcon />
           </Button>
         </Dropdown>
@@ -948,22 +1004,22 @@ function GenerationInfoDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="生成信息"
+      title={t("Generation details")}
       size="md"
       footer={
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          关闭
+          {t("Close")}
         </Button>
       }
     >
       {info && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-content-300">Service URL</span>
+            <span className="text-xs text-content-300">{t("Service URL")}</span>
             <span className="text-sm break-all text-content-100">{info.serviceUrl ?? "—"}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-content-300">Payload</span>
+            <span className="text-xs text-content-300">{t("Payload")}</span>
             <pre className="overflow-x-auto rounded-md bg-base-200 p-3 font-mono text-xs text-content-100">
               {info.payload ? JSON.stringify(info.payload, null, 2) : "—"}
             </pre>

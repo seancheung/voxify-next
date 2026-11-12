@@ -6,6 +6,7 @@ import { useAppForm } from "@/components/form";
 import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { t } from "@/i18n";
 import {
   createPrompt,
   createPromptSchema,
@@ -49,7 +50,7 @@ export default function PromptDialog({
     },
     onError: (err) =>
       toast.error({
-        title: isEdit ? "更新失败" : "添加失败",
+        title: isEdit ? t("Update failed") : t("Failed to add"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -86,15 +87,15 @@ export default function PromptDialog({
       onOpenChange={(next) => {
         if (!submitting) handleOpenChange(next);
       }}
-      title={isEdit ? "编辑提示词" : "添加提示词"}
+      title={isEdit ? t("Edit prompt") : t("Add prompt")}
       size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            取消
+            {t("Cancel")}
           </Button>
           <Button disabled={submitting} onClick={() => form.handleSubmit()}>
-            {submitting ? "保存中…" : isEdit ? "保存" : "添加"}
+            {submitting ? t("Saving…") : isEdit ? t("Save") : t("Add")}
           </Button>
         </>
       }
@@ -103,24 +104,24 @@ export default function PromptDialog({
         <div className="flex flex-col gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.FormField label="名称">
-                <field.InputField placeholder="例如：角色识别" autoFocus />
+              <field.FormField label={t("Name")}>
+                <field.InputField placeholder={t("Example: Character recognition")} autoFocus />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="description">
             {(field) => (
-              <field.FormField label="描述">
-                <field.InputField placeholder="可选，简要说明这条提示词的用途" />
+              <field.FormField label={t("Description")}>
+                <field.InputField placeholder={t("Optional description of this prompt")} />
               </field.FormField>
             )}
           </form.AppField>
           <form.AppField name="content">
             {(field) => (
-              <field.FormField label="提示词内容">
+              <field.FormField label={t("Prompt content")}>
                 <field.TextareaField
                   rows={12}
-                  placeholder="向模型描述任务，可以使用变量占位"
+                  placeholder={t("Describe the task. Variable placeholders are supported.")}
                   className="font-mono"
                 />
               </field.FormField>

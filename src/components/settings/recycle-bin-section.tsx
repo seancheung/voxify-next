@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { t } from "@/i18n";
 import {
   type DeletedProjectListItem,
   listDeletedProjects,
@@ -56,7 +57,7 @@ export default function RecycleBinSection() {
     },
     onError: (err) =>
       toast.error({
-        title: "恢复失败",
+        title: t("Restore failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -67,12 +68,14 @@ export default function RecycleBinSection() {
       invalidate();
       setConfirm(null);
       toast.success(
-        r.deletedFiles > 0 ? `已永久删除项目，并清理 ${r.deletedFiles} 个文件` : "已永久删除项目",
+        r.deletedFiles > 0
+          ? t("Permanently deleted the project and {0} files", r.deletedFiles)
+          : t("Project permanently deleted"),
       );
     },
     onError: (err) =>
       toast.error({
-        title: "删除失败",
+        title: t("Deletion failed"),
         description: err instanceof Error ? err.message : String(err),
       }),
   });
@@ -81,8 +84,10 @@ export default function RecycleBinSection() {
 
   return (
     <SectionCard
-      title="回收站"
-      description="此处列出已删除的项目，可恢复或永久删除。永久删除会一并移除项目占用的所有文件。"
+      title={t("Recycle bin")}
+      description={t(
+        "Restore or permanently delete projects. Permanent deletion removes all files belonging to the project.",
+      )}
     >
       {showSkeleton ? (
         <div className="flex flex-col gap-2">
@@ -92,17 +97,17 @@ export default function RecycleBinSection() {
         </div>
       ) : isLoading ? null : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-content-400/15 py-12 text-content-400">
-          <p className="text-sm">回收站为空</p>
+          <p className="text-sm">{t("Recycle bin is empty")}</p>
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>名称</TableHead>
-              <TableHead>作者</TableHead>
-              <TableHead>删除时间</TableHead>
-              <TableHead>占用</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead>{t("Name")}</TableHead>
+              <TableHead>{t("Author")}</TableHead>
+              <TableHead>{t("Deleted at")}</TableHead>
+              <TableHead>{t("Storage used")}</TableHead>
+              <TableHead className="text-right">{t("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,7 +117,9 @@ export default function RecycleBinSection() {
                 <TableCell className="text-content-300">{p.author ?? "—"}</TableCell>
                 <TableCell className="text-content-300">{relativeTime(p.deletedAt)}</TableCell>
                 <TableCell className="text-content-300">
-                  {p.fileCount > 0 ? `${p.fileCount} 个 · ${formatBytes(p.fileSize)}` : "—"}
+                  {p.fileCount > 0
+                    ? t("{0} items · {1}", p.fileCount, formatBytes(p.fileSize))
+                    : "—"}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-2">
@@ -123,7 +130,7 @@ export default function RecycleBinSection() {
                       onClick={() => setConfirm({ type: "restore", project: p })}
                     >
                       <RotateCcwIcon />
-                      恢复
+                      {t("Restore")}
                     </Button>
                     <Button
                       variant="danger"
@@ -132,7 +139,7 @@ export default function RecycleBinSection() {
                       onClick={() => setConfirm({ type: "purge", project: p })}
                     >
                       <TrashIcon />
-                      永久删除
+                      {t("Delete permanently")}
                     </Button>
                   </div>
                 </TableCell>
@@ -147,10 +154,10 @@ export default function RecycleBinSection() {
         onOpenChange={(open) => {
           if (!open && !restoreMut.isPending) setConfirm(null);
         }}
-        title="确认恢复项目"
+        title={t("Restore project?")}
         description={
           confirm?.type === "restore"
-            ? `项目 “${confirm.project.name}” 将被恢复并重新出现在项目列表中。`
+            ? t("“{0}” will return to the project list.", confirm.project.name)
             : undefined
         }
         size="sm"
@@ -161,7 +168,7 @@ export default function RecycleBinSection() {
               onClick={() => setConfirm(null)}
               disabled={restoreMut.isPending}
             >
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               disabled={restoreMut.isPending}
@@ -170,7 +177,7 @@ export default function RecycleBinSection() {
                 restoreMut.mutate(confirm.project.id);
               }}
             >
-              {restoreMut.isPending ? "恢复中…" : "确认恢复"}
+              {restoreMut.isPending ? t("Restoring…") : t("Confirm restore")}
             </Button>
           </>
         }
@@ -181,21 +188,27 @@ export default function RecycleBinSection() {
         onOpenChange={(open) => {
           if (!open && !purgeMut.isPending) setConfirm(null);
         }}
-        title="确认永久删除项目"
+        title={t("Permanently delete project?")}
         description={
           confirm?.type === "purge"
-            ? `项目 “${confirm.project.name}” 及其全部章节、片段、合成音频、素材与导出${
+            ? t(
+                "“{0}” and all its chapters, segments, audio, assets and exports{1} will be permanently removed from storage.",
+                confirm.project.name,
                 confirm.project.fileCount > 0
-                  ? `（共 ${confirm.project.fileCount} 个文件 · ${formatBytes(confirm.project.fileSize)}）`
-                  : ""
-              }将从存储中彻底移除，操作不可撤销。`
+                  ? t(
+                      " ({0} files · {1})",
+                      confirm.project.fileCount,
+                      formatBytes(confirm.project.fileSize),
+                    )
+                  : "",
+              )
             : undefined
         }
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)} disabled={purgeMut.isPending}>
-              取消
+              {t("Cancel")}
             </Button>
             <Button
               variant="danger"
@@ -205,7 +218,7 @@ export default function RecycleBinSection() {
                 purgeMut.mutate(confirm.project.id);
               }}
             >
-              {purgeMut.isPending ? "删除中…" : "确认永久删除"}
+              {purgeMut.isPending ? t("Deleting…") : t("Confirm permanent deletion")}
             </Button>
           </>
         }

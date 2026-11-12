@@ -5,6 +5,7 @@ import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/reac
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import NotFound from "@/components/not-found";
 import { Toaster } from "@/components/ui/toast";
+import { getLanguage, t } from "@/i18n";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -23,7 +24,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         name: "description",
-        content: "Create expressive audiobooks with AI-powered narration.",
+        content: t("Create expressive audiobooks with AI-powered narration."),
       },
       {
         name: "theme-color",
@@ -73,7 +74,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang={getLanguage()}>
       <head>
         <HeadContent />
       </head>

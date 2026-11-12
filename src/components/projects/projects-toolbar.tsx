@@ -2,14 +2,30 @@ import { ArrowDownUpIcon, SearchIcon } from "lucide-react";
 import Input from "@/components/ui/input";
 import Select, { type SelectOption } from "@/components/ui/select";
 import Toggle, { ToggleGroup } from "@/components/ui/toggle";
+import { t } from "@/i18n";
 
 export type ProjectsSortKey = "lastOpenedAt" | "createdAt" | "name";
 export type ProjectsStatusFilter = "all" | "completed" | "incomplete";
 
 const SORT_OPTIONS: SelectOption<ProjectsSortKey>[] = [
-  { value: "lastOpenedAt", label: "最近打开" },
-  { value: "createdAt", label: "最近创建" },
-  { value: "name", label: "名称" },
+  {
+    value: "lastOpenedAt",
+    get label() {
+      return t("Recently opened");
+    },
+  },
+  {
+    value: "createdAt",
+    get label() {
+      return t("Recently created");
+    },
+  },
+  {
+    value: "name",
+    get label() {
+      return t("Name");
+    },
+  },
 ];
 
 export default function ProjectsToolbar({
@@ -31,7 +47,7 @@ export default function ProjectsToolbar({
     <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-content-400/20 bg-base-200 p-3">
       <Input
         type="search"
-        placeholder="搜索名称或作者…"
+        placeholder={t("Search by name or author…")}
         value={query}
         onChange={onQueryChange}
         icon={<SearchIcon />}
@@ -43,13 +59,13 @@ export default function ProjectsToolbar({
         className="mr-4 ml-auto gap-1"
       >
         <Toggle value="all" size="sm">
-          全部
+          {t("All")}
         </Toggle>
         <Toggle value="completed" size="sm" variant="success">
-          已完成
+          {t("Complete")}
         </Toggle>
         <Toggle value="incomplete" size="sm" variant="info">
-          未完成
+          {t("Incomplete")}
         </Toggle>
       </ToggleGroup>
       <Select<ProjectsSortKey>
