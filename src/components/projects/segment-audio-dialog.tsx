@@ -1,4 +1,12 @@
-import { PlayIcon, RepeatIcon, ScissorsIcon, SquareIcon, VolumeXIcon } from "lucide-react";
+import {
+  PlayIcon,
+  Redo2Icon,
+  ScissorsIcon,
+  SkipBackIcon,
+  SquareIcon,
+  Undo2Icon,
+  VolumeXIcon,
+} from "lucide-react";
 import { type PointerEvent, useEffect, useEffectEvent, useRef, useState } from "react";
 import Button from "@/components/ui/button";
 import Dialog from "@/components/ui/dialog";
@@ -7,6 +15,8 @@ import Tooltip from "@/components/ui/tooltip";
 import { saveEditedAudio } from "@/lib/segment-audio.functions";
 import { getSegmentGenerationUrl } from "@/lib/segments.functions";
 import { editSelection, encodeWav } from "@/utils/segment-audio";
+
+type Snapshot = { audio: AudioBuffer; range: [number, number]; cursor: number };
 
 export default function SegmentAudioDialog({
   segmentId,
@@ -21,7 +31,10 @@ export default function SegmentAudioDialog({
 }) {
   const [audio, setAudio] = useState<AudioBuffer | null>(null);
   const [error, setError] = useState("");
-  const [dirty, setDirty] = useState(false);
+  const [history, setHistory] = useState<{ past: Snapshot[]; future: Snapshot[] }>({
+    past: [],
+    future: [],
+  });
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [range, setRange] = useState<[number, number]>([0, 0]);
@@ -181,32 +194,72 @@ export default function SegmentAudioDialog({
     }
   }
 
+  const playbackStart = cursor >= total ? 0 : cursor;
+  const playbackLabel = playing
+    ? "停止"
+    : selected
+      ? "循环播放选区"
+      : playbackStart === 0
+        ? "从头播放"
+        : "从光标处播放";
+
+  function togglePlayback() {
+    if (playing) stop();
+    else if (selected) void preview(start, end, true);
+    else void preview(playbackStart, total);
+  }
+
   function edit(silence: boolean) {
     if (!audio || !selected) return;
     stop();
-    setAudio(editSelection(audio, start, end, silence));
+    const next = editSelection(audio, start, end, silence);
+    setHistory({ past: [...history.past, { audio, range, cursor }], future: [] });
+    setAudio(next);
     setRange([start, silence ? end : start]);
     setCursor(start);
-    setDirty(true);
+  }
+
+  function restore(redo: boolean) {
+    const stack = redo ? history.future : history.past;
+    const next = stack.at(-1);
+    if (!audio || !next || saving) return;
+    stop();
+    anchor.current = null;
+    pan.current = null;
+    const current = { audio, range, cursor };
+    setHistory(
+      redo
+        ? { past: [...history.past, current], future: stack.slice(0, -1) }
+        : { past: stack.slice(0, -1), future: [...history.future, current] },
+    );
+    setAudio(next.audio);
+    setRange(next.range);
+    setCursor(next.cursor);
   }
 
   const shortcut = useEffectEvent((e: KeyboardEvent) => {
-    if (!audio || saving || e.isComposing || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey)
-      return;
+    if (!audio || saving || e.isComposing || e.altKey) return;
     if (
       e.target instanceof HTMLElement &&
       e.target.closest("input,textarea,select,[contenteditable=true]")
     )
       return;
-    if (e.code !== "Space" && e.key !== "Delete") return;
+    if (e.ctrlKey || e.metaKey) {
+      const key = e.key.toLowerCase();
+      if (key !== "z" && !(key === "y" && e.ctrlKey && !e.shiftKey)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (!e.repeat) restore(e.shiftKey || key === "y");
+      return;
+    }
+    if (e.shiftKey || (e.code !== "Space" && e.key !== "Delete" && e.key !== "Backspace")) return;
     e.preventDefault();
     e.stopPropagation();
     if (e.repeat) return;
     if (e.key === "Delete") {
       if (selected && end - start < total) edit(false);
-    } else if (playing) stop();
-    else if (selected) void preview(start, end, true);
-    else void preview(cursor, total);
+    } else if (e.key === "Backspace") edit(true);
+    else togglePlayback();
   });
   useEffect(() => {
     const handle = (e: KeyboardEvent) => shortcut(e);
@@ -248,7 +301,7 @@ export default function SegmentAudioDialog({
           <Button variant="ghost" disabled={saving} onClick={onClose}>
             取消
           </Button>
-          <Button disabled={!dirty || saving} onClick={save}>
+          <Button disabled={!history.past.length || saving} onClick={save}>
             {saving ? "保存中…" : "保存为新版本"}
           </Button>
         </>
@@ -330,30 +383,35 @@ export default function SegmentAudioDialog({
             />
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content={playing ? "停止（空格）" : "试听全部"}>
-              <Button
-                variant="ghost"
-                size="sm"
-                shape="circle"
-                aria-label={playing ? "停止" : "试听全部"}
-                onClick={() => (playing ? stop() : preview(0, total))}
-              >
-                {playing ? <SquareIcon /> : <PlayIcon />}
-              </Button>
-            </Tooltip>
-            <Tooltip content="循环试听选区（空格）">
+            <Tooltip content="回到片段开头">
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
-                  aria-label="循环试听选区"
-                  disabled={!selected}
-                  onClick={() => preview(start, end, true)}
+                  aria-label="回到片段开头"
+                  disabled={playing}
+                  onClick={() => {
+                    stop();
+                    setCursor(0);
+                    setRange([0, 0]);
+                    setView((prev) => ({ ...prev, origin: 0 }));
+                  }}
                 >
-                  <RepeatIcon />
+                  <SkipBackIcon />
                 </Button>
               </span>
+            </Tooltip>
+            <Tooltip content={`${playbackLabel}（空格）`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                shape="circle"
+                aria-label={playbackLabel}
+                onClick={togglePlayback}
+              >
+                {playing ? <SquareIcon /> : <PlayIcon />}
+              </Button>
             </Tooltip>
             <span className="mx-2 h-5 border-l border-content-400/30" />
             <Tooltip content="删除选区（Delete）">
@@ -370,17 +428,47 @@ export default function SegmentAudioDialog({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip content="静音选区">
+            <Tooltip content="静音选区（Backspace）">
               <span className="inline-flex">
                 <Button
                   variant="ghost"
                   size="sm"
                   shape="circle"
                   aria-label="静音选区"
+                  aria-keyshortcuts="Backspace"
                   disabled={!selected}
                   onClick={() => edit(true)}
                 >
                   <VolumeXIcon />
+                </Button>
+              </span>
+            </Tooltip>
+            <span className="mx-2 h-5 border-l border-content-400/30" />
+            <Tooltip content="撤销（Ctrl/⌘+Z）">
+              <span className="inline-flex">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  shape="circle"
+                  aria-label="撤销"
+                  disabled={!history.past.length}
+                  onClick={() => restore(false)}
+                >
+                  <Undo2Icon />
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip content="重做（Ctrl/⌘+Shift+Z 或 Ctrl+Y）">
+              <span className="inline-flex">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  shape="circle"
+                  aria-label="重做"
+                  disabled={!history.future.length}
+                  onClick={() => restore(true)}
+                >
+                  <Redo2Icon />
                 </Button>
               </span>
             </Tooltip>
