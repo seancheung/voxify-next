@@ -978,7 +978,7 @@ function SegmentRow({
           items={[
             {
               key: "edit",
-              label: t("Edit text"),
+              label: t("Edit segment"),
               icon: <PencilIcon />,
               onSelect: onEdit,
             },
