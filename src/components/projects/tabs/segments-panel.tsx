@@ -175,14 +175,18 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
   });
   const narratorList = narratorData?.items ?? [];
 
-  const segmentStates = useTTSSegmentStates(true);
+  const enqueueRevision = useRef(0);
+  const [streamRevision, setStreamRevision] = useState(0);
+  const [optimisticQueue, setOptimisticQueue] = useState(new Map<number, number>());
+  const { jobs: segmentStates, revision } = useTTSSegmentStates(streamRevision);
   const activeSet = new Set(segmentStates.active);
   const pendingSet = new Set(segmentStates.pending);
   const failedSet = new Set(segmentStates.failed);
 
   function liveStateOf(segmentId: number): SegmentLiveState {
     if (activeSet.has(segmentId)) return "active";
-    if (pendingSet.has(segmentId)) return "pending";
+    if (pendingSet.has(segmentId) || (optimisticQueue.get(segmentId) ?? -1) > revision)
+      return "pending";
     if (failedSet.has(segmentId)) return "failed";
     return null;
   }
@@ -202,6 +206,13 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
         break;
       }
     }
+    const confirmed = [...optimisticQueue].filter(([, value]) => value <= revision);
+    if (confirmed.length) {
+      hasCompletion ||= confirmed.some(([id]) => !live.has(id) && !failedNow.has(id));
+      setOptimisticQueue(
+        (current) => new Map([...current].filter(([, value]) => value > revision)),
+      );
+    }
     prevLiveRef.current = live;
     if (hasCompletion) {
       qc.invalidateQueries({ queryKey: ["segments", chapter.id] });
@@ -209,7 +220,7 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
       // counts on each row, so refresh it when generations finish.
       qc.invalidateQueries({ queryKey: ["chapters", chapter.projectId] });
     }
-  }, [segmentStates, qc, chapter.id, chapter.projectId]);
+  }, [segmentStates, optimisticQueue, revision, qc, chapter.id, chapter.projectId]);
 
   const [statusFilter, setStatusFilter] = useState<SegmentStatus | "all">("all");
   const [narratorFilter, setNarratorFilter] = useState<number>(NARRATOR_FILTER_ALL);
@@ -320,7 +331,22 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
 
   const enqueueMut = useMutation({
     mutationFn: (segmentIds: number[]) => enqueueFn({ data: { segmentIds } }),
+    onMutate: (ids) => {
+      setOptimisticQueue((current) => {
+        const next = new Map(current);
+        for (const id of ids) next.set(id, Infinity);
+        return next;
+      });
+    },
     onSuccess: ({ enqueued, skipped }, variables) => {
+      // Reconnect for an authoritative snapshot, including jobs that already finished.
+      const nextRevision = ++enqueueRevision.current;
+      setOptimisticQueue((current) => {
+        const next = new Map(current);
+        for (const id of variables) next.set(id, nextRevision);
+        return next;
+      });
+      setStreamRevision(nextRevision);
       qc.invalidateQueries({ queryKey: ["segments", chapter.id] });
       qc.invalidateQueries({ queryKey: ["tts-jobs-summary"] });
       // Single-segment enqueues come from the per-row regen button; the row's
@@ -335,7 +361,12 @@ export default function SegmentsPanel({ chapter }: { chapter: ChapterListItem })
         );
       }
     },
-    onError: (err) => {
+    onError: (err, ids) => {
+      setOptimisticQueue((current) => {
+        const next = new Map(current);
+        for (const id of ids) next.delete(id);
+        return next;
+      });
       toast.error({
         title: t("Failed to enqueue"),
         description: err instanceof Error ? err.message : String(err),
@@ -947,7 +978,7 @@ function SegmentRow({
           items={[
             {
               key: "edit",
-              label: t("Edit"),
+              label: t("Edit text"),
               icon: <PencilIcon />,
               onSelect: onEdit,
             },
