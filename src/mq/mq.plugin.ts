@@ -3,6 +3,7 @@ import { definePlugin } from "nitro";
 import { Sidequest } from "sidequest";
 export default definePlugin(async (app) => {
   await Sidequest.start({
+    logger: { level: "warn" },
     backend: {
       driver: "@sidequest/sqlite-backend",
       config: process.env.SIDEQUEST_DATABASE_URL || "sidequest.sqlite",
